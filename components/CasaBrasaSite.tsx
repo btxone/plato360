@@ -69,13 +69,11 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
 }
 
 function AppRibbon({ restaurantView = false }: { restaurantView?: boolean }) {
-  const go = useNavigation();
   return (
     <div className="app-ribbon" aria-label="Navegación principal">
       <span className="app-ribbon__label"><span className="app-dot" /> CASA BRASA</span>
       <span className="app-ribbon__divider" />
-      <button className={!restaurantView ? "is-active" : ""} onClick={() => go("/carta")}>Vista cliente</button>
-      <button className={restaurantView ? "is-active" : ""} onClick={() => go("/carta/restaurante")}>Vista restaurante</button>
+      <span className="app-ribbon__mode">{restaurantView ? "Vista restaurante" : "Carta para clientes"}</span>
     </div>
   );
 }
@@ -277,49 +275,48 @@ function CandidatePreview({ candidate, rank, onClick }: { candidate: Candidate; 
   return <button className="candidate-preview" onClick={onClick}><div className="candidate-preview__media"><MediaVisual item={candidate} candidate compact /><span className="candidate-preview__rank">0{rank}</span></div><div className="candidate-preview__copy"><span className="eyebrow-dark">EN PRUEBA</span><h3>{candidate.name}</h3><div className="candidate-preview__stats"><strong>{candidate.wouldOrderPct}%</strong><span>la pediría</span><small>{candidate.notifyCount} quieren aviso</small></div></div></button>;
 }
 
-function MenuHeader({ cartCount, onCart }: { cartCount: number; onCart: () => void }) {
-  return <div className="menu-header"><button className="menu-header__brand" aria-label="Ir al inicio de la carta"><BrandMark compact /></button><div className="menu-header__actions"><button className="menu-header__cart" aria-label="Ver mi pedido" onClick={onCart}><ShoppingBag size={18} /><span>{cartCount}</span></button></div></div>;
+function MenuHeader() {
+  return <div className="menu-header"><button className="menu-header__brand" aria-label="Ir al inicio de la carta"><BrandMark compact /></button></div>;
 }
 
-function BottomNav({ active, cartCount, go }: { active: "menu" | "traditional" | "upcoming" | "order"; cartCount: number; go: (href: string) => void }) {
-  return <nav className="bottom-nav" aria-label="Navegación del cliente"><button className={active === "menu" ? "is-active" : ""} onClick={() => go("/carta")}><Utensils size={18} /><span>Carta</span></button><button className={active === "traditional" ? "is-active" : ""} onClick={() => go("/carta/tradicional")}><BookOpen size={18} /><span>Carta tradicional</span></button><button className={active === "upcoming" ? "is-active" : ""} onClick={() => go("/carta/proximamente")}><Pointer size={18} /><span>Tu decides</span></button><button className={active === "order" ? "is-active" : ""} onClick={() => go("/carta/pedido")}><ShoppingBag size={18} /><span>Mi pedido</span>{cartCount > 0 && <b>{cartCount}</b>}</button></nav>;
+function BottomNav({ active, go }: { active: "menu" | "traditional" | "upcoming"; go: (href: string) => void }) {
+  return <nav className="bottom-nav" aria-label="Navegación del cliente"><button className={active === "menu" ? "is-active" : ""} onClick={() => go("/carta")}><Utensils size={18} /><span>Videos</span></button><button className={active === "traditional" ? "is-active" : ""} onClick={() => go("/carta/tradicional")}><BookOpen size={18} /><span>Carta</span></button><button className={active === "upcoming" ? "is-active" : ""} onClick={() => go("/carta/tu-decides")}><Pointer size={18} /><span>Tu decides</span></button></nav>;
 }
 
 function CategorySheet({ selected, onSelect, onClose }: { selected: string; onSelect: (category: string) => void; onClose: () => void }) {
   return <div className="sheet-backdrop" onClick={onClose}><div className="category-sheet" role="dialog" aria-modal="true" aria-label="Categorías" onClick={(event) => event.stopPropagation()}><div className="sheet-handle" /><div className="sheet-heading"><div><span className="eyebrow-dark">CASA BRASA</span><h2>Elegí tu antojo</h2></div><button aria-label="Cerrar categorías" onClick={onClose}><X size={19} /></button></div><div className="category-list">{categories.map((category) => <button key={category.label} className={selected === category.label ? "is-selected" : ""} onClick={() => onSelect(category.label)}><span>{category.icon}</span><strong>{category.label}</strong>{selected === category.label && <Check size={16} />}</button>)}</div></div></div>;
 }
 
-function DishCard({ dish, active, onDetails, onAdd }: { dish: Dish; active: boolean; onDetails: () => void; onAdd: () => void }) {
-  return <article className="dish-card"><MediaVisual item={dish} active={active} /><div className="dish-card__top"><Pill tone="accent">{dish.category}</Pill><span className="dish-card__counter">{String(dishes.indexOf(dish) + 1).padStart(2, "0")} / {String(dishes.length).padStart(2, "0")}</span></div><div className="dish-card__content"><div className="dish-card__label"><span className="live-dot" /> Recomendado de la casa</div><h2>{dish.name}</h2><p>{dish.description}</p><div className="dish-card__footer"><strong>{money(dish.price)}</strong><div className="dish-card__actions"><button className="dish-detail-link" onClick={onDetails}>Ver detalle <ArrowUpRight size={15} /></button><button className="add-button" onClick={onAdd}><Plus size={18} /> Agregar</button></div></div></div><div className="dish-card__swipe"><ChevronDown size={16} /><span>Deslizá para seguir</span></div></article>;
+function DishCard({ dish, active, onDetails }: { dish: Dish; active: boolean; onDetails: () => void }) {
+  return <article className="dish-card"><MediaVisual item={dish} active={active} /><div className="dish-card__top"><Pill tone="accent">{dish.category}</Pill><span className="dish-card__counter">{String(dishes.indexOf(dish) + 1).padStart(2, "0")} / {String(dishes.length).padStart(2, "0")}</span></div><div className="dish-card__content"><div className="dish-card__label"><span className="live-dot" /> Recomendado de la casa</div><h2>{dish.name}</h2><p>{dish.description}</p><div className="dish-card__footer"><strong>{money(dish.price)}</strong><div className="dish-card__actions"><button className="dish-detail-link" onClick={onDetails}>Ver detalle <ArrowUpRight size={15} /></button></div></div></div><div className="dish-card__swipe"><ChevronDown size={16} /><span>Deslizá para seguir</span></div></article>;
 }
 
-function DishFeed({ filtered, onAdd, onDetails, onSeen }: { filtered: Dish[]; onAdd: (dish: Dish) => void; onDetails: (dish: Dish) => void; onSeen: (index: number) => void }) {
+function DishFeed({ filtered, onDetails }: { filtered: Dish[]; onDetails: (dish: Dish) => void }) {
   const feedRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   useEffect(() => {
     const root = feedRef.current;
     if (!root) return;
     const cards = Array.from(root.querySelectorAll<HTMLElement>("[data-feed-index]"));
-    const observer = new IntersectionObserver((entries) => entries.forEach((entry) => { if (entry.isIntersecting) { const index = Number((entry.target as HTMLElement).dataset.feedIndex); setActiveIndex(index); onSeen(index); } }), { root, threshold: 0.7 });
+    const observer = new IntersectionObserver((entries) => entries.forEach((entry) => { if (entry.isIntersecting) { const index = Number((entry.target as HTMLElement).dataset.feedIndex); setActiveIndex(index); } }), { root, threshold: 0.7 });
     cards.forEach((card) => observer.observe(card));
     return () => observer.disconnect();
-  }, [filtered, onSeen]);
-  return <div className="dish-feed" ref={feedRef}>{filtered.map((dish, index) => <div className="dish-feed__item" data-feed-index={index} key={dish.slug}><DishCard dish={dish} active={activeIndex === index} onDetails={() => onDetails(dish)} onAdd={() => onAdd(dish)} /></div>)}</div>;
+  }, [filtered]);
+  return <div className="dish-feed" ref={feedRef}>{filtered.map((dish, index) => <div className="dish-feed__item" data-feed-index={index} key={dish.slug}><DishCard dish={dish} active={activeIndex === index} onDetails={() => onDetails(dish)} /></div>)}</div>;
 }
 
-function ClientMenuPage({ cartCount, onAdd, go, onToast }: { cartCount: number; onAdd: (dish: Dish) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+function ClientMenuPage({ go }: { go: (href: string) => void }) {
   const [category, setCategory] = useState("Recomendados");
   const [showCategories, setShowCategories] = useState(false);
-  const [seen, setSeen] = useState(0);
   const filtered = useMemo(() => category === "Recomendados" ? dishes : dishes.filter((dish) => dish.category === category), [category]);
-  return <main className="menu-page"><AppRibbon /><div className="menu-stage"><div className="menu-stage__side menu-stage__side--left"><span className="eyebrow-dark">EXPERIENCIA CLIENTE</span><h1>Así se ve<br /><em>tu carta.</em></h1><p>Un plato por pantalla. Todo el sabor, antes del primer bocado.</p><div className="qr-card"><QrCode size={33} /><span><strong>Escaneá y descubrí</strong><small>Una carta que se recorre</small></span></div><button className="menu-switch-pill" onClick={() => go("/carta/tradicional")}><span><List size={17} /></span><span><strong>Ver carta tradicional</strong><small>Fotos, nombres y precios</small></span><ArrowUpRight size={15} /></button></div><div className="menu-phone"><div className="phone-topbar phone-topbar--dark"><span>19:42</span><span className="phone-island" /><span>▮▮▮</span></div><MenuHeader cartCount={cartCount} onCart={() => go("/carta/pedido")} /><button className="menu-category-pill" type="button" onClick={() => setShowCategories(true)} aria-haspopup="dialog" aria-expanded={showCategories}>Categorías <ChevronDown size={14} /></button><DishFeed key={category} filtered={filtered} onAdd={(dish) => { onAdd(dish); onToast(`${dish.name} agregado a tu pedido`); }} onDetails={(dish) => go(`/carta/plato/${dish.slug}`)} onSeen={(index) => setSeen(index)} /><BottomNav active="menu" cartCount={cartCount} go={go} /></div><div className="menu-stage__side menu-stage__side--right">{seen >= 2 && <button className="learn-pill" onClick={() => go("/carta/restaurante")}><span><Eye size={16} /></span><span>Ver lo que aprende el restaurante<small>Datos de ejemplo</small></span><ArrowUpRight size={15} /></button>}<div className="menu-note"><span className="menu-note__mark">✦</span><p>“La carta ahora también cuenta una historia.”</p><small>— La experiencia Casa Brasa</small></div></div></div>{showCategories && <CategorySheet selected={category} onSelect={(value) => { setCategory(value); setShowCategories(false); }} onClose={() => setShowCategories(false)} />}</main>;
+  return <main className="menu-page"><AppRibbon /><div className="menu-stage"><div className="menu-stage__side menu-stage__side--left"><span className="eyebrow-dark">EXPERIENCIA CLIENTE</span><h1>Así se ve<br /><em>tu carta.</em></h1><p>Un plato por pantalla. Todo el sabor, antes del primer bocado.</p><div className="qr-card"><QrCode size={33} /><span><strong>Escaneá y descubrí</strong><small>Una carta que se recorre</small></span></div><button className="menu-switch-pill" onClick={() => go("/carta/tradicional")}><span><List size={17} /></span><span><strong>Ver carta tradicional</strong><small>Fotos, nombres y precios</small></span><ArrowUpRight size={15} /></button></div><div className="menu-phone"><div className="phone-topbar phone-topbar--dark"><span>19:42</span><span className="phone-island" /><span>▮▮▮</span></div><MenuHeader /><button className="menu-category-pill" type="button" onClick={() => setShowCategories(true)} aria-haspopup="dialog" aria-expanded={showCategories}>Categorías <ChevronDown size={14} /></button><DishFeed key={category} filtered={filtered} onDetails={(dish) => go(`/carta/plato/${dish.slug}`)} /><BottomNav active="menu" go={go} /></div><div className="menu-stage__side menu-stage__side--right"><div className="menu-note"><span className="menu-note__mark">✦</span><p>“La carta ahora también cuenta una historia.”</p><small>— La experiencia Casa Brasa</small></div></div></div>{showCategories && <CategorySheet selected={category} onSelect={(value) => { setCategory(value); setShowCategories(false); }} onClose={() => setShowCategories(false)} />}</main>;
 }
 
 function traditionalCategoryId(label: string) {
   return `traditional-${label.toLowerCase().replace(/\s+/g, "-")}`;
 }
 
-function TraditionalMenuPage({ cartCount, onAdd, go, onToast }: { cartCount: number; onAdd: (dish: Dish) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+function TraditionalMenuPage({ go }: { go: (href: string) => void }) {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const menuCategories = categories.filter((category) => category.label !== "Recomendados");
   const visibleDishes = selectedCategory === "Todos" ? dishes : dishes.filter((dish) => dish.category === selectedCategory);
@@ -331,7 +328,7 @@ function TraditionalMenuPage({ cartCount, onAdd, go, onToast }: { cartCount: num
       <div className="traditional-shell">
         <header className="traditional-header">
           <button className="traditional-brand" onClick={() => go("/carta")} aria-label="Volver a la carta visual"><BrandMark /><span>MENÚ DIGITAL</span></button>
-          <div className="traditional-header__actions"><button className="traditional-switch" onClick={() => go("/carta")}><Sparkles size={15} /> Carta visual</button><button className="traditional-cart" onClick={() => go("/carta/pedido")}><ShoppingBag size={17} /><span>Mi pedido</span>{cartCount > 0 && <b>{cartCount}</b>}</button></div>
+          <div className="traditional-header__actions"><button className="traditional-switch" onClick={() => go("/carta")}><Sparkles size={15} /> Carta visual</button></div>
         </header>
 
         <section className="traditional-hero">
@@ -341,12 +338,12 @@ function TraditionalMenuPage({ cartCount, onAdd, go, onToast }: { cartCount: num
 
         <div className="traditional-toolbar"><div className="traditional-categories"><button className={selectedCategory === "Todos" ? "is-selected" : ""} onClick={() => setSelectedCategory("Todos")}>Toda la carta</button>{menuCategories.map((category) => <button className={selectedCategory === category.label ? "is-selected" : ""} key={category.label} onClick={() => setSelectedCategory(category.label)}>{category.icon} {category.label}</button>)}</div><span>{visibleDishes.length} platos · fotos reales de la carta</span></div>
 
-        <div className="traditional-sections">{groups.map((group, index) => <section className="traditional-section" key={group.label} id={traditionalCategoryId(group.label)}><div className="traditional-section__heading"><span>0{index + 1}</span><div><span className="traditional-kicker">CASA BRASA</span><h2>{group.label}</h2></div><small>{group.dishes.length} {group.dishes.length === 1 ? "plato" : "platos"}</small></div><div className="traditional-dish-grid">{group.dishes.map((dish) => <article className="traditional-dish-card" key={dish.slug}><div className="traditional-dish-card__image"><img src={dish.image} alt={dish.name} loading="lazy" /><span>{dish.tags?.[0] ?? "De la casa"}</span></div><div className="traditional-dish-card__body"><div className="traditional-dish-card__title"><h3>{dish.name}</h3><strong>{money(dish.price)}</strong></div><p>{dish.description}</p><div className="traditional-dish-card__ingredients">{dish.ingredients.slice(0, 3).map((ingredient) => <span key={ingredient}>{ingredient}</span>)}</div><button onClick={() => { onAdd(dish); onToast(`${dish.name} agregado a tu pedido`); }}><Plus size={15} /> Agregar al pedido</button></div></article>)}</div></section>)}</div>
+        <div className="traditional-sections">{groups.map((group, index) => <section className="traditional-section" key={group.label} id={traditionalCategoryId(group.label)}><div className="traditional-section__heading"><span>0{index + 1}</span><div><span className="traditional-kicker">CASA BRASA</span><h2>{group.label}</h2></div><small>{group.dishes.length} {group.dishes.length === 1 ? "plato" : "platos"}</small></div><div className="traditional-dish-grid">{group.dishes.map((dish) => <article className="traditional-dish-card" key={dish.slug}><div className="traditional-dish-card__image"><img src={dish.image} alt={dish.name} loading="lazy" /><span>{dish.tags?.[0] ?? "De la casa"}</span></div><div className="traditional-dish-card__body"><div className="traditional-dish-card__title"><h3>{dish.name}</h3><strong>{money(dish.price)}</strong></div><p>{dish.description}</p><div className="traditional-dish-card__ingredients">{dish.ingredients.slice(0, 3).map((ingredient) => <span key={ingredient}>{ingredient}</span>)}</div></div></article>)}</div></section>)}</div>
 
-        <section className="traditional-footer-cta"><div><span className="traditional-kicker">¿TE TENTÓ ALGO?</span><h2>Guardalo para<br /><em>después.</em></h2><p>Tu selección queda lista en tu pedido.</p></div><button onClick={() => go("/carta/pedido")}><ShoppingBag size={17} /> Ver mi pedido {cartCount > 0 && <b>{cartCount}</b>} <ArrowUpRight size={16} /></button></section>
+        <section className="traditional-footer-cta"><div><span className="traditional-kicker">¿QUÉ PLATO ELEGIRÍAS?</span><h2>Ayudá a decidir<br /><em>lo que viene.</em></h2><p>Votá por tu favorito en Tu decides.</p></div><button onClick={() => go("/carta/tu-decides")}><Pointer size={17} /> Ir a Tu decides <ArrowUpRight size={16} /></button></section>
         <footer className="traditional-footer"><BrandMark compact /><span>Casa Brasa · Montevideo</span><span>Una carta simple, hecha para elegir.</span></footer>
       </div>
-      <BottomNav active="traditional" cartCount={cartCount} go={go} />
+      <BottomNav active="traditional" go={go} />
     </main>
   );
 }
@@ -359,8 +356,8 @@ function NotFoundState({ go }: { go: (href: string) => void }) {
   return <main className="simple-dark-page"><BrandMark /><div className="not-found"><span className="not-found__icon">✦</span><h1>Este plato no está disponible por ahora.</h1><p>Volvamos a la carta para seguir descubriendo.</p><ArrowButton onClick={() => go("/carta")} variant="light">Volver a la carta</ArrowButton></div></main>;
 }
 
-function DishDetailPage({ dish, cartCount, onAdd, go, onToast }: { dish: Dish; cartCount: number; onAdd: (dish: Dish) => void; go: (href: string) => void; onToast: (message: string) => void }) {
-  return <main className="detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Detalle del plato" onBack={() => go("/carta")} /><div className="detail-hero"><MediaVisual item={dish} active /><div className="detail-hero__overlay"><Pill tone="accent">{dish.category}</Pill><span className="detail-hero__play"><Play size={13} fill="currentColor" /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">CASA BRASA</span><h1>{dish.name}</h1></div><strong>{money(dish.price)}</strong></div><p className="detail-description">{dish.description}</p><div className="tag-row">{dish.tags?.map((tag) => <Pill key={tag}>{tag}</Pill>)}</div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{dish.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>)}</div></div><button className="detail-add" onClick={() => { onAdd(dish); onToast(`${dish.name} agregado a tu pedido`); }}><Plus size={18} /> Agregar a mi pedido <span>{cartCount > 0 ? `${cartCount} en tu pedido` : ""}</span></button><button className="back-to-menu" onClick={() => go("/carta")}><ArrowLeft size={16} /> Seguir viendo la carta</button></div></div></main>;
+function DishDetailPage({ dish, go }: { dish: Dish; go: (href: string) => void }) {
+  return <main className="detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Detalle del plato" onBack={() => go("/carta")} /><div className="detail-hero"><MediaVisual item={dish} active /><div className="detail-hero__overlay"><Pill tone="accent">{dish.category}</Pill><span className="detail-hero__play"><Play size={13} fill="currentColor" /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">CASA BRASA</span><h1>{dish.name}</h1></div><strong>{money(dish.price)}</strong></div><p className="detail-description">{dish.description}</p><div className="tag-row">{dish.tags?.map((tag) => <Pill key={tag}>{tag}</Pill>)}</div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{dish.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>)}</div></div><button className="back-to-menu" onClick={() => go("/carta")}><ArrowLeft size={16} /> Seguir viendo la carta</button></div></div></main>;
 }
 
 function Modal({ title, children, onClose, actionLabel }: { title: string; children: React.ReactNode; onClose: () => void; actionLabel?: string }) {
@@ -506,7 +503,7 @@ function CandidateSlide({ candidate, index, active, voted, onVote, onDetails }: 
   );
 }
 
-function UpcomingPage({ votes, cartCount, onVote, onNotify, go, onToast }: { votes: Record<string, boolean>; cartCount: number; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+function UpcomingPage({ votes, onVote, onNotify, go, onToast }: { votes: Record<string, boolean>; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
   const feedRef = useRef<HTMLDivElement>(null);
   const voteTimer = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -550,7 +547,6 @@ function UpcomingPage({ votes, cartCount, onVote, onNotify, go, onToast }: { vot
           <BrandMark compact />
           <div className="upcoming-header__right">
             <Pill tone="accent">TU DECIDES</Pill>
-            <button onClick={() => go("/carta/pedido")} aria-label="Ver mi pedido"><ShoppingBag size={18} /></button>
           </div>
         </div>
         <div className="upcoming-feed" ref={feedRef} aria-label="Platos que podés elegir">
@@ -562,12 +558,12 @@ function UpcomingPage({ votes, cartCount, onVote, onNotify, go, onToast }: { vot
               active={index === activeIndex}
               voted={Boolean(votes[candidate.slug])}
               onVote={() => handleVote(candidate)}
-              onDetails={() => go("/carta/proximamente/" + candidate.slug)}
+              onDetails={() => go("/carta/tu-decides/" + candidate.slug)}
             />
           ))}
         </div>
         <div className="upcoming-progress" aria-live="polite">{String(activeIndex + 1).padStart(2, "0")} / {String(candidates.length).padStart(2, "0")}</div>
-        <BottomNav active="upcoming" cartCount={cartCount} go={go} />
+        <BottomNav active="upcoming" go={go} />
         {celebratingCandidate && <VoteCelebration candidate={celebratingCandidate} />}
         {notifyCandidate && <NotifyModal candidate={notifyCandidate} onClose={() => setNotifyCandidate(null)} onSave={() => { onNotify(notifyCandidate); onToast("¡Listo! Te avisaremos cuando se estrene."); }} />}
       </div>
@@ -577,7 +573,7 @@ function UpcomingPage({ votes, cartCount, onVote, onNotify, go, onToast }: { vot
 
 function CandidateDetailPage({ candidate, voted, notified, onVote, onNotify, go, onToast }: { candidate: Candidate; voted: boolean; notified: boolean; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
   const [showNotifyModal, setShowNotifyModal] = useState(false);
-  return <main className="detail-page candidate-detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Próximo plato" onBack={() => go("/carta/proximamente")} /><div className="detail-hero"><MediaVisual item={candidate} candidate active /><div className="detail-hero__overlay"><Pill tone="accent">PRÓXIMO PLATO</Pill><span className="detail-hero__play"><Sparkles size={13} /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">EN PRUEBA</span><h1>{candidate.name}</h1></div><strong>{money(candidate.estimatedPrice)}<small> estimado</small></strong></div><p className="detail-description">{candidate.description}</p><div className="candidate-detail-stats"><span><strong>{candidate.wouldOrderPct}%</strong><small>la pediría</small></span><span><strong>{candidate.votes}</strong><small>votos</small></span><span><strong>{candidate.avgAttention} s</strong><small>mirando</small></span></div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{candidate.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>)}</div></div><div className="candidate-detail-actions"><button className={"detail-vote" + (voted ? " is-voted" : "")} onClick={() => { if (!voted) { onVote(candidate); onToast("¡Gracias! Tu voto cuenta."); } }} disabled={voted}>{voted ? <Check size={18} /> : <Heart size={18} />} {voted ? "Ya votaste" : "Lo pediría"}</button><button className={"detail-notify" + (notified ? " is-notified" : "")} onClick={() => { if (!notified) onNotify(candidate); setShowNotifyModal(true); }}>{notified ? <Check size={17} /> : <Bell size={17} />} {notified ? "Aviso anotado" : "Avisame cuando esté disponible"}</button></div><button className="back-to-menu" onClick={() => go("/carta/proximamente")}><ArrowLeft size={16} /> Ver todos los platos en prueba</button></div></div>{showNotifyModal && <Modal title="¡Anotado!" onClose={() => setShowNotifyModal(false)} actionLabel="Seguir viendo">En el producto real, el restaurante podría avisarte por WhatsApp o enviarte un beneficio cuando el plato esté disponible.</Modal>}</main>;
+  return <main className="detail-page candidate-detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Tu decides" onBack={() => go("/carta/tu-decides")} /><div className="detail-hero"><MediaVisual item={candidate} candidate active /><div className="detail-hero__overlay"><Pill tone="accent">IDEA EN VOTACIÓN</Pill><span className="detail-hero__play"><Sparkles size={13} /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">EN PRUEBA</span><h1>{candidate.name}</h1></div><strong>{money(candidate.estimatedPrice)}<small> estimado</small></strong></div><p className="detail-description">{candidate.description}</p><div className="candidate-detail-stats"><span><strong>{candidate.wouldOrderPct}%</strong><small>la pediría</small></span><span><strong>{candidate.votes}</strong><small>votos</small></span><span><strong>{candidate.avgAttention} s</strong><small>mirando</small></span></div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{candidate.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>)}</div></div><div className="candidate-detail-actions"><button className={"detail-vote" + (voted ? " is-voted" : "")} onClick={() => { if (!voted) { onVote(candidate); onToast("¡Gracias! Tu voto cuenta."); } }} disabled={voted}>{voted ? <Check size={18} /> : <Heart size={18} />} {voted ? "Ya votaste" : "Lo pediría"}</button><button className={"detail-notify" + (notified ? " is-notified" : "")} onClick={() => { if (!notified) onNotify(candidate); setShowNotifyModal(true); }}>{notified ? <Check size={17} /> : <Bell size={17} />} {notified ? "Aviso anotado" : "Avisame cuando esté disponible"}</button></div><button className="back-to-menu" onClick={() => go("/carta/tu-decides")}><ArrowLeft size={16} /> Ver todos los platos de Tu decides</button></div></div>{showNotifyModal && <Modal title="¡Anotado!" onClose={() => setShowNotifyModal(false)} actionLabel="Seguir viendo">En el producto real, el restaurante podría avisarte por WhatsApp o enviarte un beneficio cuando el plato esté disponible.</Modal>}</main>;
 }
 
 function DashboardNav({ active, go }: { active: "overview" | "tests"; go: (href: string) => void }) {
@@ -641,7 +637,6 @@ function RestaurantTests({ go }: { go: (href: string) => void }) {
 export default function CasaBrasaSite() {
   const pathname = usePathname();
   const go = useNavigation();
-  const [cart, setCart] = useState<Cart>({});
   const [votes, setVotes] = useState<Record<string, boolean>>({});
   const [notified, setNotified] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState<ToastMessage>(null);
@@ -652,10 +647,8 @@ export default function CasaBrasaSite() {
     const timer = window.setTimeout(() => {
       if (cancelled) return;
       try {
-        const savedCart = window.localStorage.getItem("casa-brasa-cart");
         const savedVotes = window.localStorage.getItem("casa-brasa-votes");
         const savedNotified = window.localStorage.getItem("casa-brasa-notified");
-        if (savedCart) setCart(JSON.parse(savedCart));
         if (savedVotes) setVotes(JSON.parse(savedVotes));
         if (savedNotified) setNotified(JSON.parse(savedNotified));
       } catch {
@@ -667,35 +660,26 @@ export default function CasaBrasaSite() {
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, []);
 
-  useEffect(() => { if (hydrated) window.localStorage.setItem("casa-brasa-cart", JSON.stringify(cart)); }, [cart, hydrated]);
   useEffect(() => { if (hydrated) window.localStorage.setItem("casa-brasa-votes", JSON.stringify(votes)); }, [votes, hydrated]);
   useEffect(() => { if (hydrated) window.localStorage.setItem("casa-brasa-notified", JSON.stringify(notified)); }, [notified, hydrated]);
 
-  const cartCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
-  const addToCart = (dish: Dish) => setCart((current) => ({ ...current, [dish.slug]: (current[dish.slug] ?? 0) + 1 }));
-  const increment = (slug: string) => setCart((current) => ({ ...current, [slug]: (current[slug] ?? 0) + 1 }));
-  const decrement = (slug: string) => setCart((current) => { const next = { ...current }; if ((next[slug] ?? 0) <= 1) delete next[slug]; else next[slug] -= 1; return next; });
-  const remove = (slug: string) => setCart((current) => { const next = { ...current }; delete next[slug]; return next; });
   const showToast = (message: string) => setToast({ id: Date.now(), message });
   const registerVote = (candidate: Candidate) => setVotes((current) => current[candidate.slug] ? current : ({ ...current, [candidate.slug]: true }));
   const registerNotify = (candidate: Candidate) => setNotified((current) => current[candidate.slug] ? current : ({ ...current, [candidate.slug]: true }));
 
   const parts = pathname.split("/").filter(Boolean);
   const isLanding = parts.length === 0;
-  if (isLanding) return <><Landing go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (isLanding) return <><ClientMenuPage go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   if (parts[0] !== "carta") return <><NotFoundState go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[1] === "tradicional") return <><TraditionalMenuPage cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (parts[1] === "tradicional") return <><TraditionalMenuPage go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   if (parts[1] === "plato" && parts[2]) {
     const dish = getDish(parts[2]);
-    return <>{dish ? <DishDetailPage dish={dish} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
+    return <>{dish ? <DishDetailPage dish={dish} go={go} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
   }
-  if (parts[1] === "pedido") return <><OrderPage cart={cart} onIncrement={increment} onDecrement={decrement} onRemove={remove} go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[1] === "proximamente" && parts[2]) {
+  if ((parts[1] === "tu-decides" || parts[1] === "proximamente") && parts[2]) {
     const candidate = candidates.find((item) => item.slug === parts[2]);
     return <>{candidate ? <CandidateDetailPage candidate={candidate} voted={Boolean(votes[candidate.slug])} notified={Boolean(notified[candidate.slug])} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
   }
-  if (parts[1] === "proximamente") return <><UpcomingPage votes={votes} cartCount={cartCount} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[1] === "restaurante" && parts[2] === "pruebas") return <RestaurantTests go={go} />;
-  if (parts[1] === "restaurante") return <RestaurantOverview go={go} />;
-  return <><ClientMenuPage cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (parts[1] === "tu-decides" || parts[1] === "proximamente") return <><UpcomingPage votes={votes} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  return <><ClientMenuPage go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
 }

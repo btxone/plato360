@@ -1,5 +1,5 @@
-import CasaBrasaSite from "@/components/CasaBrasaSite";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return <CasaBrasaSite />;
+  redirect("/carta");
 }
