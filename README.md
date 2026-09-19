@@ -16,6 +16,15 @@ npm run build
 npm run start
 ```
 
+Para ejecutarla con el runtime preparado para VPS:
+
+```bash
+npm run build
+npm run start:vps
+```
+
+El health check queda disponible en `/api/health`. La configuración Docker inicial se encuentra en `Dockerfile` y `docker-compose.yml`; el servicio se publica únicamente en `127.0.0.1:4173` del host.
+
 ## Rutas
 
 - `/` — redirige a la carta visual.

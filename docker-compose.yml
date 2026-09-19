@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+    container_name: plato360-app
+    environment:
+      CLOUDFLARE_CF_FETCH_ENABLED: "false"
+      HOST: "0.0.0.0"
+      NODE_ENV: "production"
+      PORT: "4173"
+      WRANGLER_SEND_METRICS: "false"
+    ports:
+      - "127.0.0.1:${APP_PORT:-4173}:4173"
+    restart: unless-stopped
