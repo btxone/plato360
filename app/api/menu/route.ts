@@ -44,6 +44,7 @@ export async function GET() {
         slug: dish.slug,
         name: dish.name,
         categoryId: dish.categoryId,
+        category: menuCategories.find((category) => category.id === dish.categoryId)?.label ?? "Recomendados",
         description: dish.description,
         price: dish.price,
         video: dish.videoUrl,
@@ -60,4 +61,3 @@ export async function GET() {
     return NextResponse.json({ error: "Menu unavailable" }, { status: 503 });
   }
 }
-

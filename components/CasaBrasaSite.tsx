@@ -37,7 +37,7 @@ import {
   X,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { candidates, type Candidate } from "@/data/candidates";
 import { categories, dishes, getDish, type Dish } from "@/data/dishes";
 import { dishAnalytics, insights, overview } from "@/data/analytics";
@@ -45,6 +45,18 @@ import { restaurant, whatsappUrl } from "@/data/restaurant";
 
 type Cart = Record<string, number>;
 type ToastMessage = { id: number; message: string } | null;
+
+type MvpData = {
+  categories: typeof categories;
+  dishes: Dish[];
+  candidates: Candidate[];
+};
+
+const MvpDataContext = createContext<MvpData>({ categories, dishes, candidates });
+
+function useMvpData() {
+  return useContext(MvpDataContext);
+}
 
 const money = (value: number) => `$${value.toLocaleString("es-UY")}`;
 
@@ -284,11 +296,13 @@ function BottomNav({ active, go }: { active: "menu" | "traditional" | "upcoming"
 }
 
 function CategorySheet({ selected, onSelect, onClose }: { selected: string; onSelect: (category: string) => void; onClose: () => void }) {
-  return <div className="sheet-backdrop" onClick={onClose}><div className="category-sheet" role="dialog" aria-modal="true" aria-label="Categorías" onClick={(event) => event.stopPropagation()}><div className="sheet-handle" /><div className="sheet-heading"><div><span className="eyebrow-dark">CASA BRASA</span><h2>Elegí tu antojo</h2></div><button aria-label="Cerrar categorías" onClick={onClose}><X size={19} /></button></div><div className="category-list">{categories.map((category) => <button key={category.label} className={selected === category.label ? "is-selected" : ""} onClick={() => onSelect(category.label)}><span>{category.icon}</span><strong>{category.label}</strong>{selected === category.label && <Check size={16} />}</button>)}</div></div></div>;
+  const { categories: menuCategories } = useMvpData();
+  return <div className="sheet-backdrop" onClick={onClose}><div className="category-sheet" role="dialog" aria-modal="true" aria-label="Categorías" onClick={(event) => event.stopPropagation()}><div className="sheet-handle" /><div className="sheet-heading"><div><span className="eyebrow-dark">CASA BRASA</span><h2>Elegí tu antojo</h2></div><button aria-label="Cerrar categorías" onClick={onClose}><X size={19} /></button></div><div className="category-list">{menuCategories.map((category) => <button key={category.label} className={selected === category.label ? "is-selected" : ""} onClick={() => onSelect(category.label)}><span>{category.icon}</span><strong>{category.label}</strong>{selected === category.label && <Check size={16} />}</button>)}</div></div></div>;
 }
 
 function DishCard({ dish, active, onDetails }: { dish: Dish; active: boolean; onDetails: () => void }) {
-  return <article className="dish-card"><MediaVisual item={dish} active={active} /><div className="dish-card__top"><Pill tone="accent">{dish.category}</Pill><span className="dish-card__counter">{String(dishes.indexOf(dish) + 1).padStart(2, "0")} / {String(dishes.length).padStart(2, "0")}</span></div><div className="dish-card__content"><div className="dish-card__label"><span className="live-dot" /> Recomendado de la casa</div><h2>{dish.name}</h2><p>{dish.description}</p><div className="dish-card__footer"><strong>{money(dish.price)}</strong><div className="dish-card__actions"><button className="dish-detail-link" onClick={onDetails}>Ver detalle <ArrowUpRight size={15} /></button></div></div></div><div className="dish-card__swipe"><ChevronDown size={16} /><span>Deslizá para seguir</span></div></article>;
+  const { dishes: menuDishes } = useMvpData();
+  return <article className="dish-card"><MediaVisual item={dish} active={active} /><div className="dish-card__top"><Pill tone="accent">{dish.category}</Pill><span className="dish-card__counter">{String(menuDishes.indexOf(dish) + 1).padStart(2, "0")} / {String(menuDishes.length).padStart(2, "0")}</span></div><div className="dish-card__content"><div className="dish-card__label"><span className="live-dot" /> Recomendado de la casa</div><h2>{dish.name}</h2><p>{dish.description}</p><div className="dish-card__footer"><strong>{money(dish.price)}</strong><div className="dish-card__actions"><button className="dish-detail-link" onClick={onDetails}>Ver detalle <ArrowUpRight size={15} /></button></div></div></div><div className="dish-card__swipe"><ChevronDown size={16} /><span>Deslizá para seguir</span></div></article>;
 }
 
 function DishFeed({ filtered, onDetails }: { filtered: Dish[]; onDetails: (dish: Dish) => void }) {
@@ -306,9 +320,10 @@ function DishFeed({ filtered, onDetails }: { filtered: Dish[]; onDetails: (dish:
 }
 
 function ClientMenuPage({ go }: { go: (href: string) => void }) {
+  const { dishes: menuDishes } = useMvpData();
   const [category, setCategory] = useState("Recomendados");
   const [showCategories, setShowCategories] = useState(false);
-  const filtered = useMemo(() => category === "Recomendados" ? dishes : dishes.filter((dish) => dish.category === category), [category]);
+  const filtered = useMemo(() => category === "Recomendados" ? menuDishes : menuDishes.filter((dish) => dish.category === category), [category, menuDishes]);
   return <main className="menu-page"><AppRibbon /><div className="menu-stage"><div className="menu-stage__side menu-stage__side--left"><span className="eyebrow-dark">EXPERIENCIA CLIENTE</span><h1>Así se ve<br /><em>tu carta.</em></h1><p>Un plato por pantalla. Todo el sabor, antes del primer bocado.</p><div className="qr-card"><QrCode size={33} /><span><strong>Escaneá y descubrí</strong><small>Una carta que se recorre</small></span></div><button className="menu-switch-pill" onClick={() => go("/carta/tradicional")}><span><List size={17} /></span><span><strong>Ver carta tradicional</strong><small>Fotos, nombres y precios</small></span><ArrowUpRight size={15} /></button></div><div className="menu-phone"><div className="phone-topbar phone-topbar--dark"><span>19:42</span><span className="phone-island" /><span>▮▮▮</span></div><MenuHeader /><button className="menu-category-pill" type="button" onClick={() => setShowCategories(true)} aria-haspopup="dialog" aria-expanded={showCategories}>Categorías <ChevronDown size={14} /></button><DishFeed key={category} filtered={filtered} onDetails={(dish) => go(`/carta/plato/${dish.slug}`)} /><BottomNav active="menu" go={go} /></div><div className="menu-stage__side menu-stage__side--right"><div className="menu-note"><span className="menu-note__mark">✦</span><p>“La carta ahora también cuenta una historia.”</p><small>— La experiencia Casa Brasa</small></div></div></div>{showCategories && <CategorySheet selected={category} onSelect={(value) => { setCategory(value); setShowCategories(false); }} onClose={() => setShowCategories(false)} />}</main>;
 }
 
@@ -317,10 +332,11 @@ function traditionalCategoryId(label: string) {
 }
 
 function TraditionalMenuPage({ go }: { go: (href: string) => void }) {
+  const { categories: menuCategories, dishes: menuDishes } = useMvpData();
   const [selectedCategory, setSelectedCategory] = useState("Todos");
-  const menuCategories = categories.filter((category) => category.label !== "Recomendados");
-  const visibleDishes = selectedCategory === "Todos" ? dishes : dishes.filter((dish) => dish.category === selectedCategory);
-  const groups = selectedCategory === "Todos" ? menuCategories.map((category) => ({ label: category.label, dishes: dishes.filter((dish) => dish.category === category.label) })) : [{ label: selectedCategory, dishes: visibleDishes }];
+  const visibleDishes = selectedCategory === "Todos" ? menuDishes : menuDishes.filter((dish) => dish.category === selectedCategory);
+  const groups = selectedCategory === "Todos" ? menuCategories.filter((category) => category.label !== "Recomendados").map((category) => ({ label: category.label, dishes: menuDishes.filter((dish) => dish.category === category.label) })) : [{ label: selectedCategory, dishes: visibleDishes }];
+  const traditionalCategories = menuCategories.filter((category) => category.label !== "Recomendados");
 
   return (
     <main className="traditional-page">
@@ -333,10 +349,10 @@ function TraditionalMenuPage({ go }: { go: (href: string) => void }) {
 
         <section className="traditional-hero">
           <div className="traditional-hero__copy"><span className="traditional-kicker">CASA BRASA · CARTA</span><h1>Todo lo rico,<br /><em>en su lugar.</em></h1><p>Una carta clara y cálida para recorrer los platos, mirar las fotos y elegir sin apuro.</p><div className="traditional-meta"><span><Clock3 size={15} /><strong>Abierto hoy</strong><small>12:00 — 00:30</small></span><span><MapPin size={15} /><strong>Montevideo</strong><small>Sentite como en casa</small></span></div></div>
-          <div className="traditional-highlight"><div className="traditional-highlight__image"><img src={dishes[0].image} alt="Smash Trufa" /><span>RECOMENDADO DE LA CASA</span></div><div className="traditional-highlight__copy"><span className="eyebrow-dark">PARA EMPEZAR</span><h2>Smash Trufa</h2><p>Doble carne smash, cheddar, cebolla crocante y mayo de trufa.</p><strong>{money(dishes[0].price)}</strong></div></div>
+          <div className="traditional-highlight"><div className="traditional-highlight__image"><img src={menuDishes[0].image} alt="Smash Trufa" /><span>RECOMENDADO DE LA CASA</span></div><div className="traditional-highlight__copy"><span className="eyebrow-dark">PARA EMPEZAR</span><h2>Smash Trufa</h2><p>Doble carne smash, cheddar, cebolla crocante y mayo de trufa.</p><strong>{money(menuDishes[0].price)}</strong></div></div>
         </section>
 
-        <div className="traditional-toolbar"><div className="traditional-categories"><button className={selectedCategory === "Todos" ? "is-selected" : ""} onClick={() => setSelectedCategory("Todos")}>Toda la carta</button>{menuCategories.map((category) => <button className={selectedCategory === category.label ? "is-selected" : ""} key={category.label} onClick={() => setSelectedCategory(category.label)}>{category.icon} {category.label}</button>)}</div><span>{visibleDishes.length} platos · fotos reales de la carta</span></div>
+        <div className="traditional-toolbar"><div className="traditional-categories"><button className={selectedCategory === "Todos" ? "is-selected" : ""} onClick={() => setSelectedCategory("Todos")}>Toda la carta</button>{traditionalCategories.map((category) => <button className={selectedCategory === category.label ? "is-selected" : ""} key={category.label} onClick={() => setSelectedCategory(category.label)}>{category.icon} {category.label}</button>)}</div><span>{visibleDishes.length} platos · fotos reales de la carta</span></div>
 
         <div className="traditional-sections">{groups.map((group, index) => <section className="traditional-section" key={group.label} id={traditionalCategoryId(group.label)}><div className="traditional-section__heading"><span>0{index + 1}</span><div><span className="traditional-kicker">CASA BRASA</span><h2>{group.label}</h2></div><small>{group.dishes.length} {group.dishes.length === 1 ? "plato" : "platos"}</small></div><div className="traditional-dish-grid">{group.dishes.map((dish) => <article className="traditional-dish-card" key={dish.slug}><div className="traditional-dish-card__image"><img src={dish.image} alt={dish.name} loading="lazy" /><span>{dish.tags?.[0] ?? "De la casa"}</span></div><div className="traditional-dish-card__body"><div className="traditional-dish-card__title"><h3>{dish.name}</h3><strong>{money(dish.price)}</strong></div><p>{dish.description}</p><div className="traditional-dish-card__ingredients">{dish.ingredients.slice(0, 3).map((ingredient) => <span key={ingredient}>{ingredient}</span>)}</div></div></article>)}</div></section>)}</div>
 
@@ -471,13 +487,14 @@ function NotifyModal({ candidate, onClose, onSave }: { candidate: Candidate; onC
 }
 
 function CandidateSlide({ candidate, index, active, voted, onVote, onDetails }: { candidate: Candidate; index: number; active: boolean; voted: boolean; onVote: () => void; onDetails: () => void }) {
+  const { candidates: upcomingCandidates } = useMvpData();
   return (
     <article className="candidate-slide" data-candidate-slide={index}>
       <MediaVisual item={candidate} candidate active={active} />
       <div className="candidate-slide__veil" />
       <div className="candidate-slide__top">
         <Pill tone="accent">EN PRUEBA</Pill>
-        <span>{String(index + 1).padStart(2, "0")} / {String(candidates.length).padStart(2, "0")}</span>
+        <span>{String(index + 1).padStart(2, "0")} / {String(upcomingCandidates.length).padStart(2, "0")}</span>
       </div>
       <div className="candidate-slide__content">
         <span className="candidate-slide__eyebrow">TU DECIDES · PRÓXIMO PLATO</span>
@@ -503,7 +520,8 @@ function CandidateSlide({ candidate, index, active, voted, onVote, onDetails }: 
   );
 }
 
-function UpcomingPage({ votes, onVote, onNotify, go, onToast }: { votes: Record<string, boolean>; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+function UpcomingPage({ votes, onVote, onNotify, go, onToast }: { votes: Record<string, boolean>; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate, email?: string) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+  const { candidates: upcomingCandidates } = useMvpData();
   const feedRef = useRef<HTMLDivElement>(null);
   const voteTimer = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -536,7 +554,7 @@ function UpcomingPage({ votes, onVote, onNotify, go, onToast }: { votes: Record<
     }, 850);
   };
 
-  const celebratingCandidate = candidates.find((candidate) => candidate.slug === celebratingSlug);
+  const celebratingCandidate = upcomingCandidates.find((candidate) => candidate.slug === celebratingSlug);
 
   return (
     <main className="upcoming-page">
@@ -550,7 +568,7 @@ function UpcomingPage({ votes, onVote, onNotify, go, onToast }: { votes: Record<
           </div>
         </div>
         <div className="upcoming-feed" ref={feedRef} aria-label="Platos que podés elegir">
-          {candidates.map((candidate, index) => (
+          {upcomingCandidates.map((candidate, index) => (
             <CandidateSlide
               key={candidate.slug}
               candidate={candidate}
@@ -562,16 +580,16 @@ function UpcomingPage({ votes, onVote, onNotify, go, onToast }: { votes: Record<
             />
           ))}
         </div>
-        <div className="upcoming-progress" aria-live="polite">{String(activeIndex + 1).padStart(2, "0")} / {String(candidates.length).padStart(2, "0")}</div>
+        <div className="upcoming-progress" aria-live="polite">{String(activeIndex + 1).padStart(2, "0")} / {String(upcomingCandidates.length).padStart(2, "0")}</div>
         <BottomNav active="upcoming" go={go} />
         {celebratingCandidate && <VoteCelebration candidate={celebratingCandidate} />}
-        {notifyCandidate && <NotifyModal candidate={notifyCandidate} onClose={() => setNotifyCandidate(null)} onSave={() => { onNotify(notifyCandidate); onToast("¡Listo! Te avisaremos cuando se estrene."); }} />}
+        {notifyCandidate && <NotifyModal candidate={notifyCandidate} onClose={() => setNotifyCandidate(null)} onSave={(email) => { onNotify(notifyCandidate, email); onToast("¡Listo! Te avisaremos cuando se estrene."); }} />}
       </div>
     </main>
   );
 }
 
-function CandidateDetailPage({ candidate, voted, notified, onVote, onNotify, go, onToast }: { candidate: Candidate; voted: boolean; notified: boolean; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+function CandidateDetailPage({ candidate, voted, notified, onVote, onNotify, go, onToast }: { candidate: Candidate; voted: boolean; notified: boolean; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate, email?: string) => void; go: (href: string) => void; onToast: (message: string) => void }) {
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   return <main className="detail-page candidate-detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Tu decides" onBack={() => go("/carta/tu-decides")} /><div className="detail-hero"><MediaVisual item={candidate} candidate active /><div className="detail-hero__overlay"><Pill tone="accent">IDEA EN VOTACIÓN</Pill><span className="detail-hero__play"><Sparkles size={13} /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">EN PRUEBA</span><h1>{candidate.name}</h1></div><strong>{money(candidate.estimatedPrice)}<small> estimado</small></strong></div><p className="detail-description">{candidate.description}</p><div className="candidate-detail-stats"><span><strong>{candidate.wouldOrderPct}%</strong><small>la pediría</small></span><span><strong>{candidate.votes}</strong><small>votos</small></span><span><strong>{candidate.avgAttention} s</strong><small>mirando</small></span></div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{candidate.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>)}</div></div><div className="candidate-detail-actions"><button className={"detail-vote" + (voted ? " is-voted" : "")} onClick={() => { if (!voted) { onVote(candidate); onToast("¡Gracias! Tu voto cuenta."); } }} disabled={voted}>{voted ? <Check size={18} /> : <Heart size={18} />} {voted ? "Ya votaste" : "Lo pediría"}</button><button className={"detail-notify" + (notified ? " is-notified" : "")} onClick={() => { if (!notified) onNotify(candidate); setShowNotifyModal(true); }}>{notified ? <Check size={17} /> : <Bell size={17} />} {notified ? "Aviso anotado" : "Avisame cuando esté disponible"}</button></div><button className="back-to-menu" onClick={() => go("/carta/tu-decides")}><ArrowLeft size={16} /> Ver todos los platos de Tu decides</button></div></div>{showNotifyModal && <Modal title="¡Anotado!" onClose={() => setShowNotifyModal(false)} actionLabel="Seguir viendo">En el producto real, el restaurante podría avisarte por WhatsApp o enviarte un beneficio cuando el plato esté disponible.</Modal>}</main>;
 }
@@ -634,13 +652,66 @@ function RestaurantTests({ go }: { go: (href: string) => void }) {
   return <main className="dashboard-page"><AppRibbon restaurantView /><DashboardNav active="tests" go={go} /><div className="dashboard-content"><DashboardHeader title="Qué plato debería llegar a la carta" subtitle="Compará el interés de tus próximas ideas antes de invertir en lanzarlas." active="tests" go={go} /><section className="kpi-grid kpi-grid--tests"><KpiCard label="Platos en prueba" value="3" sub="Ideas abiertas a votación" icon={<Sparkles size={18} />} /><KpiCard label="Votos recibidos" value="993" sub="Personas que opinaron" icon={<Vote size={18} />} /><KpiCard label="Quieren que les avises" value="374" sub="Interés para el lanzamiento" icon={<Bell size={18} />} /><KpiCard label="Candidato con más interés" value="Burger BBQ" sub="72% la pediría" icon={<Star size={18} />} featured /></section><section className="dashboard-grid dashboard-grid--tests"><div className="test-hero-card"><div className="test-hero-card__top"><Pill tone="accent">MEJOR CANDIDATO</Pill><span className="test-hero-card__star">✦</span></div><span className="eyebrow-dark">BURGER BBQ AHUMADA</span><h2>La idea con más fuerza<br /><em>para llegar a la carta.</em></h2><p>Combina el mayor porcentaje de personas que dicen que la pedirían, el mayor tiempo mirando y la mayor cantidad de personas que quieren que les avisemos.</p><div className="test-hero-card__stats"><span><strong>72%</strong><small>la pediría</small></span><span><strong>438</strong><small>votos</small></span><span><strong>186</strong><small>quieren aviso</small></span><span><strong>7,2 s</strong><small>mirando</small></span></div><button onClick={() => go("/carta/proximamente/burger-bbq-ahumada")}>Ver cómo se ve para el cliente <ArrowUpRight size={16} /></button></div><CandidateRanking go={go} /></section><section className="comparison-section"><div className="section-kicker">Una decisión más simple</div><div className="comparison-copy"><h2>Probá antes de<br /><em>incorporar.</em></h2><p>Los votos no reemplazan tu criterio. Te dan una señal rápida sobre qué idea vale la pena explorar primero.</p></div><div className="candidate-bars">{candidates.map((candidate, index) => <div className="candidate-bar-row" key={candidate.slug}><span className="candidate-bar-row__name"><b>0{index + 1}</b>{candidate.name}</span><div><i style={{ width: candidate.wouldOrderPct + "%" }} /></div><strong>{candidate.wouldOrderPct}%</strong></div>)}</div></section><div className="dashboard-footer-link"><button onClick={() => go("/carta")}><Utensils size={16} /> Volver a ver la carta como cliente <ArrowRight size={16} /></button></div></div></main>;
 }
 
+type MenuApiPayload = {
+  categories: Array<{ label: string; icon: string }>;
+  dishes: Array<Omit<Dish, "category" | "video" | "poster"> & { category: string; video: string | null; poster: string | null }>;
+};
+
+type CandidatesApiPayload = {
+  candidates: Array<Omit<Candidate, "video" | "poster"> & { video: string | null; poster: string | null }>;
+};
+
 export default function CasaBrasaSite() {
   const pathname = usePathname();
   const go = useNavigation();
+  const [menuCategories, setMenuCategories] = useState(categories);
+  const [menuDishes, setMenuDishes] = useState(dishes);
+  const [menuCandidates, setMenuCandidates] = useState(candidates);
   const [votes, setVotes] = useState<Record<string, boolean>>({});
   const [notified, setNotified] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState<ToastMessage>(null);
   const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadMvpData = async () => {
+      try {
+        const [menuResponse, candidatesResponse] = await Promise.all([
+          fetch("/api/menu"),
+          fetch("/api/tu-decides"),
+        ]);
+
+        if (menuResponse.ok) {
+          const payload = await menuResponse.json() as MenuApiPayload;
+          if (!cancelled && payload.categories?.length && payload.dishes?.length) {
+            setMenuCategories(payload.categories);
+            setMenuDishes(payload.dishes.map((dish) => ({
+              ...dish,
+              video: dish.video ?? "",
+              poster: dish.poster ?? dish.image,
+            })));
+          }
+        }
+
+        if (candidatesResponse.ok) {
+          const payload = await candidatesResponse.json() as CandidatesApiPayload;
+          if (!cancelled && payload.candidates?.length) {
+            setMenuCandidates(payload.candidates.map((candidate) => ({
+              ...candidate,
+              video: candidate.video ?? "",
+              poster: candidate.poster ?? "",
+            })));
+          }
+        }
+      } catch {
+        // Static data remains available as a visual fallback when the API is unavailable.
+      }
+    };
+
+    void loadMvpData();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -664,22 +735,61 @@ export default function CasaBrasaSite() {
   useEffect(() => { if (hydrated) window.localStorage.setItem("casa-brasa-notified", JSON.stringify(notified)); }, [notified, hydrated]);
 
   const showToast = (message: string) => setToast({ id: Date.now(), message });
-  const registerVote = (candidate: Candidate) => setVotes((current) => current[candidate.slug] ? current : ({ ...current, [candidate.slug]: true }));
-  const registerNotify = (candidate: Candidate) => setNotified((current) => current[candidate.slug] ? current : ({ ...current, [candidate.slug]: true }));
+  const getVoterToken = () => {
+    const storageKey = "casa-brasa-voter-token";
+    const existingToken = window.localStorage.getItem(storageKey);
+    if (existingToken) return existingToken;
+    const generatedToken = typeof window.crypto.randomUUID === "function"
+      ? window.crypto.randomUUID()
+      : `voter-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(storageKey, generatedToken);
+    return generatedToken;
+  };
+  const registerVote = (candidate: Candidate) => {
+    setVotes((current) => current[candidate.slug] ? current : ({ ...current, [candidate.slug]: true }));
+    try {
+      void fetch(`/api/tu-decides/${encodeURIComponent(candidate.slug)}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voterToken: getVoterToken() }),
+      }).catch(() => undefined);
+    } catch {
+      // The local optimistic vote keeps the demo usable if the API is unavailable.
+    }
+  };
+  const registerNotify = (candidate: Candidate, email?: string) => {
+    setNotified((current) => current[candidate.slug] ? current : ({ ...current, [candidate.slug]: true }));
+    if (!email) return;
+    try {
+      void fetch(`/api/tu-decides/${encodeURIComponent(candidate.slug)}/subscriptions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      }).catch(() => undefined);
+    } catch {
+      // The local confirmation keeps the demo usable if the API is unavailable.
+    }
+  };
 
   const parts = pathname.split("/").filter(Boolean);
   const isLanding = parts.length === 0;
-  if (isLanding) return <><ClientMenuPage go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[0] !== "carta") return <><NotFoundState go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[1] === "tradicional") return <><TraditionalMenuPage go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[1] === "plato" && parts[2]) {
-    const dish = getDish(parts[2]);
-    return <>{dish ? <DishDetailPage dish={dish} go={go} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
+  const data = { categories: menuCategories, dishes: menuDishes, candidates: menuCandidates };
+  let page: React.ReactNode;
+
+  if (isLanding) page = <ClientMenuPage go={go} />;
+  else if (parts[0] !== "carta") page = <NotFoundState go={go} />;
+  else if (parts[1] === "tradicional") page = <TraditionalMenuPage go={go} />;
+  else if (parts[1] === "plato" && parts[2]) {
+    const dish = menuDishes.find((item) => item.slug === parts[2]);
+    page = dish ? <DishDetailPage dish={dish} go={go} /> : <NotFoundState go={go} />;
+  } else if ((parts[1] === "tu-decides" || parts[1] === "proximamente") && parts[2]) {
+    const candidate = menuCandidates.find((item) => item.slug === parts[2]);
+    page = candidate ? <CandidateDetailPage candidate={candidate} voted={Boolean(votes[candidate.slug])} notified={Boolean(notified[candidate.slug])} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /> : <NotFoundState go={go} />;
+  } else if (parts[1] === "tu-decides" || parts[1] === "proximamente") {
+    page = <UpcomingPage votes={votes} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} />;
+  } else {
+    page = <ClientMenuPage go={go} />;
   }
-  if ((parts[1] === "tu-decides" || parts[1] === "proximamente") && parts[2]) {
-    const candidate = candidates.find((item) => item.slug === parts[2]);
-    return <>{candidate ? <CandidateDetailPage candidate={candidate} voted={Boolean(votes[candidate.slug])} notified={Boolean(notified[candidate.slug])} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
-  }
-  if (parts[1] === "tu-decides" || parts[1] === "proximamente") return <><UpcomingPage votes={votes} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  return <><ClientMenuPage go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+
+  return <MvpDataContext.Provider value={data}>{page}<Toast toast={toast} onClose={() => setToast(null)} /></MvpDataContext.Provider>;
 }
