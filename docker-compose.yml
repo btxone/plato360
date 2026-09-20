@@ -11,4 +11,9 @@ services:
       WRANGLER_SEND_METRICS: "false"
     ports:
       - "127.0.0.1:${APP_PORT:-4173}:4173"
+    volumes:
+      - plato360-wrangler-state:/app/.wrangler/state
     restart: unless-stopped
+
+volumes:
+  plato360-wrangler-state:
