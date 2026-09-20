@@ -23,7 +23,16 @@ npm run build
 npm run start:vps
 ```
 
-El health check queda disponible en `/api/health`. La configuración Docker inicial se encuentra en `Dockerfile` y `docker-compose.yml`; el servicio se publica únicamente en `127.0.0.1:4173` del host.
+El arranque prepara automáticamente la base D1 local con `db/seed.sql` y deja el health check disponible en `/api/health`. La configuración Docker inicial se encuentra en `Dockerfile` y `docker-compose.yml`; el servicio se publica únicamente en `127.0.0.1:4173` del host.
+
+Para inicializar o volver a cargar los datos durante el desarrollo:
+
+```bash
+npm run build
+npm run db:init
+```
+
+El estado de D1 local se conserva en `.wrangler/state` y Docker lo monta en el volumen `plato360-wrangler-state`.
 
 ## Rutas
 
@@ -34,6 +43,12 @@ El health check queda disponible en `/api/health`. La configuración Docker inic
 - `/carta/tu-decides` — platos futuros en prueba y votación.
 - `/carta/tu-decides/[slug]` — detalle de un plato futuro.
 
+## API del MVP
+
+- `GET /api/menu` — restaurante, categorías y platos publicados.
+- `GET /api/tu-decides` — candidatos activos y sus métricas iniciales.
+- `GET /api/health` — estado del servicio.
+
 La ruta anterior `/carta/proximamente` se conserva como alias compatible para enlaces existentes.
 
 ## Personalización rápida
@@ -42,6 +57,7 @@ La ruta anterior `/carta/proximamente` se conserva como alias compatible para en
 - Platos, precios, copy, ingredientes y archivos visuales: `data/dishes.ts`.
 - Assets públicos listos para el VPS: `public/assets/`.
 - Platos futuros y votos de ejemplo: `data/candidates.ts`.
+- Esquema y seed persistente: `db/schema.ts` y `db/seed.sql`.
 - Sistema visual completo: `app/globals.css`.
 
 ## Assets
