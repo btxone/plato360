@@ -42,12 +42,16 @@ El estado de D1 local se conserva en `.wrangler/state` y Docker lo monta en el v
 - `/carta/plato/[slug]` — detalle de un plato.
 - `/carta/tu-decides` — platos futuros en prueba y votación.
 - `/carta/tu-decides/[slug]` — detalle de un plato futuro.
+- `/restaurante/login` — acceso privado de la vista restaurante.
+- `/restaurante` — métricas y edición de contenido para el restaurante.
 
 ## API del MVP
 
 - `GET /api/menu` — restaurante, categorías y platos publicados.
 - `GET /api/tu-decides` — candidatos activos y sus métricas iniciales.
 - `GET /api/health` — estado del servicio.
+- `POST /api/auth/login` y `POST /api/auth/logout` — sesión de la vista restaurante.
+- `GET/PATCH /api/admin/catalog` — lectura y edición protegida de negocio, categorías, platos e ideas.
 
 La ruta anterior `/carta/proximamente` se conserva como alias compatible para enlaces existentes.
 
@@ -83,6 +87,10 @@ La interfaz detecta si un video todavía no existe y muestra un fallback visual;
 La interfaz pública está limitada a tres experiencias: carta visual, carta tradicional y “Tu decides”. Pedidos, pagos, dashboard de restaurante y generación automática de videos quedan fuera de esta primera versión.
 
 La generación de video se integrará más adelante mediante una petición POST HTTP desde el servidor. Por ahora los videos se cargan manualmente desde `public/assets/videos/`.
+
+## Acceso local del restaurante
+
+En Docker, la demo usa por defecto `admin` / `plato360-local`. Se pueden reemplazar antes de iniciar el contenedor mediante `ADMIN_USERNAME`, `ADMIN_PASSWORD` y `ADMIN_SESSION_SECRET`. Estos valores son únicamente de desarrollo local; antes de publicar en un VPS deben definirse como secretos propios.
 
 ## Estado de la carta
 
