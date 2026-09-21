@@ -271,6 +271,20 @@ export const candidateCampaigns = pgTable(
   ],
 );
 
+export const candidateMedia = pgTable(
+  "candidate_media",
+  {
+    candidateId: uuid("candidate_id").notNull().references(() => candidateCampaigns.id, { onDelete: "cascade" }),
+    mediaId: uuid("media_id").notNull().references(() => mediaAssets.id, { onDelete: "cascade" }),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isPrimary: boolean("is_primary").notNull().default(false),
+  },
+  (table) => [
+    primaryKey({ columns: [table.candidateId, table.mediaId] }),
+    index("candidate_media_candidate_order_idx").on(table.candidateId, table.sortOrder),
+  ],
+);
+
 export const publicationSchedules = pgTable(
   "publication_schedules",
   {

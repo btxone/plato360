@@ -12,7 +12,7 @@ La fuente de verdad es `db/schema.ts` y la primera migración generada es `drizz
 | --- | --- | --- |
 | Local y acceso | `locations`, `users`, `auth_sessions`, `audit_logs`, `feature_flags` | SuperAdmin es externo a `users`; Admin y Mozo sí se almacenan en PostgreSQL. |
 | Catálogo | `categories`, `products`, `ingredients`, `product_ingredients`, `media_assets`, `product_media`, `menu_entries`, `publication_schedules` | Precios en centavos enteros; publicación y disponibilidad se separan; medios temporales y finales tienen estado explícito. |
-| “Eliges tú” | `candidate_campaigns`, `candidate_votes`, `candidate_interests` | Un voto único por candidato y sesión anónima; los interesados se deduplican por email normalizado. |
+| “Eliges tú” | `candidate_campaigns`, `candidate_media`, `candidate_votes`, `candidate_interests` | Un voto único por candidato y sesión anónima; los interesados se deduplican por email normalizado; los medios se conservan al promocionar. |
 | QR y visita | `qr_codes`, `diner_sessions` | Se guardan únicamente identificadores/digests; el token firmado no se persiste en claro. QR fijo y dinámico tienen reglas de vencimiento distintas. |
 | Pedidos | `orders`, `order_items`, `order_history` | Los ítems guardan snapshot de nombre y precio; el pedido usa versión para concurrencia y no admite reapertura. |
 | Push | `push_subscriptions`, `push_outbox` | Las suscripciones pertenecen a usuarios; los envíos salen por outbox con reintentos. |
