@@ -2,12 +2,14 @@
 
 Sitio comercial para restaurantes: una carta tipo Reels con contenido visual, un pedido local, platos “Tu decides” y dos vistas de restaurante con datos de ejemplo.
 
-## Ejecutar
+## Ejecutar en desarrollo
 
 ```bash
 npm install
 npm run dev
 ```
+
+El proyecto se ejecuta con Next.js sobre Node.js. El adaptador Vinext/Cloudflare se conserva únicamente como compatibilidad temporal en los comandos `*:vinext`.
 
 Para ejecutar la prueba de humo de las rutas principales con el servidor local activo:
 
@@ -22,6 +24,18 @@ npm run build
 npm run start
 ```
 
+El comando `start` usa el servidor standalone generado por Next.js, que es el mismo artefacto que ejecuta la imagen Docker.
+
+## Despliegue en VPS
+
+El despliegue reproducible para el VPS está definido en `Dockerfile`, `docker-compose.yml` y `Caddyfile`.
+
+1. Copiar `.env.example` a `.env` y definir `DOMAIN` con el dominio real.
+2. Ejecutar `docker compose up -d --build`.
+3. Comprobar `https://DOMINIO/api/health` y revisar `docker compose ps`.
+
+La aplicación escucha dentro de Docker en el puerto 3000. Caddy termina HTTPS y publica el servicio en los puertos 80 y 443.
+
 ## Rutas
 
 - `/` — landing comercial.
@@ -33,6 +47,7 @@ npm run start
 - `/carta/proximamente/[slug]` — detalle de un plato futuro.
 - `/carta/restaurante` — resumen de interés.
 - `/carta/restaurante/pruebas` — ranking de platos futuros.
+- `/api/health` — comprobación de disponibilidad para Docker y el proxy.
 
 ## Personalización rápida
 
