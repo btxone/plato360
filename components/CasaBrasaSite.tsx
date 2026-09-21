@@ -321,9 +321,10 @@ function DishFeed({ filtered, onDetails }: { filtered: Dish[]; onDetails: (dish:
 
 function ClientMenuPage({ go }: { go: (href: string) => void }) {
   const { dishes: menuDishes } = useMvpData();
+  const videoDishes = useMemo(() => menuDishes.filter((dish) => Boolean(dish.video)), [menuDishes]);
   const [category, setCategory] = useState("Recomendados");
   const [showCategories, setShowCategories] = useState(false);
-  const filtered = useMemo(() => category === "Recomendados" ? menuDishes : menuDishes.filter((dish) => dish.category === category), [category, menuDishes]);
+  const filtered = useMemo(() => category === "Recomendados" ? videoDishes : videoDishes.filter((dish) => dish.category === category), [category, videoDishes]);
   return <main className="menu-page"><AppRibbon /><div className="menu-stage"><div className="menu-stage__side menu-stage__side--left"><span className="eyebrow-dark">EXPERIENCIA CLIENTE</span><h1>Así se ve<br /><em>tu carta.</em></h1><p>Un plato por pantalla. Todo el sabor, antes del primer bocado.</p><div className="qr-card"><QrCode size={33} /><span><strong>Escaneá y descubrí</strong><small>Una carta que se recorre</small></span></div><button className="menu-switch-pill" onClick={() => go("/carta/tradicional")}><span><List size={17} /></span><span><strong>Ver carta tradicional</strong><small>Fotos, nombres y precios</small></span><ArrowUpRight size={15} /></button></div><div className="menu-phone"><div className="phone-topbar phone-topbar--dark"><span>19:42</span><span className="phone-island" /><span>▮▮▮</span></div><MenuHeader /><button className="menu-category-pill" type="button" onClick={() => setShowCategories(true)} aria-haspopup="dialog" aria-expanded={showCategories}>Categorías <ChevronDown size={14} /></button><DishFeed key={category} filtered={filtered} onDetails={(dish) => go(`/carta/plato/${dish.slug}`)} /><BottomNav active="menu" go={go} /></div><div className="menu-stage__side menu-stage__side--right"><div className="menu-note"><span className="menu-note__mark">✦</span><p>“La carta ahora también cuenta una historia.”</p><small>— La experiencia Casa Brasa</small></div></div></div>{showCategories && <CategorySheet selected={category} onSelect={(value) => { setCategory(value); setShowCategories(false); }} onClose={() => setShowCategories(false)} />}</main>;
 }
 

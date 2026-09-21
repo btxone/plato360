@@ -51,7 +51,10 @@ El estado de D1 local se conserva en `.wrangler/state` y Docker lo monta en el v
 - `GET /api/tu-decides` — candidatos activos y sus métricas iniciales.
 - `GET /api/health` — estado del servicio.
 - `POST /api/auth/login` y `POST /api/auth/logout` — sesión de la vista restaurante.
-- `GET/PATCH /api/admin/catalog` — lectura y edición protegida de negocio, categorías, platos e ideas.
+- `GET/POST/PATCH/DELETE /api/admin/catalog` — lectura, alta, edición y eliminación protegida de negocio, categorías, platos e ideas. Las categorías con platillos asignados no se pueden borrar hasta mover esos platillos.
+- `POST /api/admin/uploads` — carga protegida de imágenes de referencia para producción; en celular acepta cámara o archivos.
+- `GET /api/assets/...` — sirve los assets cargados en el bucket R2 local/VPS.
+- `GET/POST /api/admin/video-jobs` — cola protegida para solicitar videos por platillo. La llamada al generador HTTP POST queda preparada, pero todavía no se ejecuta.
 
 La ruta anterior `/carta/proximamente` se conserva como alias compatible para enlaces existentes.
 
@@ -59,7 +62,7 @@ La ruta anterior `/carta/proximamente` se conserva como alias compatible para en
 
 - Restaurante, tagline, ubicación, logo y WhatsApp: `data/restaurant.ts`.
 - Platos, precios, copy, ingredientes y archivos visuales: `data/dishes.ts`.
-- Assets públicos listos para el VPS: `public/assets/`.
+- Assets públicos listos para el VPS: `public/assets/`. Las imágenes que el restaurante suba desde el panel se guardan aparte en R2 mediante el binding `BUCKET`.
 - Platos futuros y votos de ejemplo: `data/candidates.ts`.
 - Esquema y seed persistente: `db/schema.ts` y `db/seed.sql`.
 - Sistema visual completo: `app/globals.css`.
@@ -82,11 +85,13 @@ Al desplegar, se debe copiar la carpeta `public/assets/` junto con la aplicació
 
 La interfaz detecta si un video todavía no existe y muestra un fallback visual; cada archivo puede reemplazarse sin editar componentes.
 
+En la pestaña “Carta de videos” del panel restaurante, el bloque “Imágenes para producción” permite elegir una imagen, abrir la cámara en dispositivos móviles y subir varias imágenes. Las referencias se conservan en la solicitud de video y se sirven desde `/api/assets/...`.
+
 ## Alcance actual del MVP
 
-La interfaz pública está limitada a tres experiencias: carta visual, carta tradicional y “Tu decides”. Pedidos, pagos, dashboard de restaurante y generación automática de videos quedan fuera de esta primera versión.
+La interfaz pública incluye tres experiencias: carta visual, carta tradicional y “Tu decides”. El restaurante también cuenta con un panel privado separado en dos productos: “Carta tradicional” para cargar y editar platillos, y “Carta de videos” para gestionar assets y solicitar producción. Pedidos y pagos quedan fuera de esta primera versión.
 
-La generación de video se integrará más adelante mediante una petición POST HTTP desde el servidor. Por ahora los videos se cargan manualmente desde `public/assets/videos/`.
+La generación de video se integrará más adelante mediante una petición POST HTTP desde el servidor. Por ahora, solicitar un video crea una tarea `requested` en la cola local; los videos terminados se pueden cargar manualmente desde `public/assets/videos/`.
 
 ## Acceso local del restaurante
 
@@ -94,4 +99,4 @@ En Docker, la demo usa por defecto `admin` / `plato360-local`. Se pueden reempla
 
 ## Estado de la carta
 
-Los votos y los avisos usan estado local del navegador y `localStorage` en esta etapa visual. No se envían pedidos ni se conecta ningún servicio externo. La persistencia central de votos y emails corresponde a los siguientes milestones del MVP.
+Los votos, avisos, catálogo del restaurante y solicitudes de video se guardan en la base local D1 de la demo. No se envían pedidos ni se conecta todavía ningún servicio externo de generación.
