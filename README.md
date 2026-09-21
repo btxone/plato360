@@ -30,11 +30,11 @@ El comando `start` usa el servidor standalone generado por Next.js, que es el mi
 
 El despliegue reproducible para el VPS está definido en `Dockerfile`, `docker-compose.yml` y `Caddyfile`.
 
-1. Copiar `.env.example` a `.env` y definir `DOMAIN` con el dominio real.
+1. Copiar `.env.example` a `.env` y definir `DOMAIN`, `POSTGRES_PASSWORD`, `SUPERADMIN_PASSWORD_HASH` y `QR_HMAC_SECRET`.
 2. Ejecutar `docker compose up -d --build`.
 3. Comprobar `https://DOMINIO/api/health` y revisar `docker compose ps`.
 
-La aplicación escucha dentro de Docker en el puerto 3000. Caddy termina HTTPS y publica el servicio en los puertos 80 y 443.
+La aplicación escucha dentro de Docker en el puerto 3000. PostgreSQL persiste en un volumen independiente. Caddy termina HTTPS, publica únicamente `/assets/*` desde `public/assets` y envía el resto al servicio de aplicación en los puertos 80 y 443.
 
 ## Rutas
 

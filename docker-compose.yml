@@ -1,4 +1,19 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-plato360}
+      POSTGRES_USER: ${POSTGRES_USER:-plato360}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build:
       context: .
@@ -8,8 +23,12 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-plato360}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-plato360}
     expose:
       - "3000"
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s
@@ -30,9 +49,11 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./public/assets:/srv/assets:ro
       - caddy_data:/data
       - caddy_config:/config
 
 volumes:
+  postgres_data:
   caddy_data:
   caddy_config:
