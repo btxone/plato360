@@ -9,6 +9,12 @@ npm install
 npm run dev
 ```
 
+Para ejecutar la prueba de humo de las rutas principales con el servidor local activo:
+
+```bash
+npm run test:smoke
+```
+
 Para generar la versión de producción:
 
 ```bash
