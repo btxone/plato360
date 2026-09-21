@@ -36,6 +36,14 @@ El despliegue reproducible para el VPS está definido en `Dockerfile`, `docker-c
 
 La aplicación escucha dentro de Docker en el puerto 3000. PostgreSQL persiste en un volumen independiente. Caddy termina HTTPS, publica únicamente `/assets/*` desde `public/assets` y envía el resto al servicio de aplicación en los puertos 80 y 443.
 
+Para aplicar migraciones en un entorno con PostgreSQL disponible:
+
+```bash
+npm run db:migrate
+```
+
+El modelo relacional y sus decisiones están documentados en `docs/data-model.md`.
+
 ## Rutas
 
 - `/` — landing comercial.
