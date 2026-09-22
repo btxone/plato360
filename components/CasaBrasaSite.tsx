@@ -3,14 +3,11 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { Candidate } from "@/data/candidates";
-import type { Dish } from "@/data/dishes";
+import type { Candidate, Dish } from "@/lib/catalog-types";
 import type { CatalogSnapshot } from "@/lib/catalog";
-import { Landing } from "@/components/casa-brasa/landing";
 import { OrderPage } from "@/components/casa-brasa/order";
 import { CandidateDetailPage, UpcomingPage } from "@/components/casa-brasa/upcoming";
 import { ClientMenuPage, DishDetailPage, NotFoundState, TraditionalMenuPage } from "@/components/casa-brasa/client";
-import { RestaurantOverview, RestaurantTests } from "@/components/casa-brasa/dashboard";
 import {
   type Cart,
   Toast,
@@ -106,10 +103,8 @@ export default function CasaBrasaSite({ initialCatalog }: { initialCatalog: Cata
   };
 
   const parts = pathname.split("/").filter(Boolean);
-  const isLanding = parts.length === 0;
-  if (isLanding) return <><Landing go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (parts.length === 0) return <ClientMenuPage dishes={catalog.dishes} categories={catalog.categories} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} />;
   if (parts[0] !== "carta") return <><NotFoundState go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[1] === "tradicional") return <><TraditionalMenuPage dishes={catalog.dishes} categories={catalog.categories} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   if (parts[1] === "plato" && parts[2]) {
     const dish = catalog.dishes.find((item) => item.slug === parts[2]);
     return <>{dish ? <DishDetailPage dish={dish} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
@@ -120,7 +115,7 @@ export default function CasaBrasaSite({ initialCatalog }: { initialCatalog: Cata
     return <>{candidate ? <CandidateDetailPage candidate={candidate} voted={Boolean(votes[candidate.slug])} notified={Boolean(notified[candidate.slug])} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
   }
   if (parts[1] === "proximamente") return <><UpcomingPage candidates={catalog.candidates} votes={votes} cartCount={cartCount} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[1] === "restaurante" && parts[2] === "pruebas") return <RestaurantTests go={go} />;
-  if (parts[1] === "restaurante") return <RestaurantOverview go={go} />;
+  if (parts[1] === "tradicional") return <><TraditionalMenuPage dishes={catalog.dishes} categories={catalog.categories} location={catalog.location} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (parts[1] === "restaurante") return <><NotFoundState go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   return <><ClientMenuPage dishes={catalog.dishes} categories={catalog.categories} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
 }

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./admin.css";
 
 export const metadata: Metadata = {
-  title: "Casa Brasa · Cocina que entra por los ojos",
-  description: "Una carta visual con videos cortos para descubrir qué platos generan más ganas.",
+  title: "Plato360 · Carta digital",
+  description: "Carta digital con videos de los platos y pedidos desde la mesa.",
   other: {
     "codex-preview": "development",
   },

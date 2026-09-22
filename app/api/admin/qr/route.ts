@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { auditLogs, qrCodes } from "@/db/schema";
 import { AuthenticationRequiredError, PermissionDeniedError, requireSession, resolveLocationId } from "@/lib/authorization";
-import { createQrCode, QrFeatureDisabledError, InvalidQrError } from "@/lib/qr";
+import { createQrCode, getQrToken, QrFeatureDisabledError, InvalidQrError } from "@/lib/qr";
 
 export const runtime = "nodejs";
 
@@ -16,6 +16,8 @@ const createSchema = z.object({
 });
 
 function publicQr(qr: typeof qrCodes.$inferSelect) {
+  const appUrl = process.env.PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  const token = getQrToken(qr);
   return {
     id: qr.id,
     locationId: qr.locationId,
@@ -29,6 +31,7 @@ function publicQr(qr: typeof qrCodes.$inferSelect) {
     lastUsedAt: qr.lastUsedAt,
     createdAt: qr.createdAt,
     updatedAt: qr.updatedAt,
+    entryUrl: `${appUrl}/carta?qr=${encodeURIComponent(token)}`,
   };
 }
 
@@ -65,12 +68,11 @@ export async function POST(request: Request) {
       entityId: qr.id,
       metadata: { kind: qr.kind, tableLabel: qr.tableLabel, expiresAt: qr.expiresAt?.toISOString() ?? null },
     });
-    const appUrl = process.env.PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
     return NextResponse.json({
       qr: publicQr(qr),
       token,
-      entryUrl: `${appUrl}/carta?qr=${encodeURIComponent(token)}`,
-      warning: "Guardá este token ahora: por seguridad no se vuelve a mostrar en las consultas posteriores.",
+      entryUrl: publicQr(qr).entryUrl,
+      warning: "El enlace queda disponible en el listado de QR para volver a copiarlo cuando lo necesites.",
     }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthenticationRequiredError) return NextResponse.json({ error: error.message }, { status: 401 });

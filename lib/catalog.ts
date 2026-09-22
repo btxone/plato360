@@ -9,34 +9,37 @@ import {
   ingredients,
   mediaAssets,
   menuEntries,
+  locations,
   productIngredients,
   productMedia,
   products,
 } from "@/db/schema";
-import { candidates as demoCandidates, type Candidate } from "@/data/candidates";
-import { categories as demoCategories, dishes as demoDishes, type Dish } from "@/data/dishes";
+import type { Candidate, CatalogCategory, Dish, PublicLocation } from "@/lib/catalog-types";
 
 export type CatalogSnapshot = {
+  location: PublicLocation | null;
   dishes: Dish[];
-  categories: typeof demoCategories;
+  categories: CatalogCategory[];
   candidates: Candidate[];
-  source: "database" | "demo";
+  source: "database";
 };
 
-const demoCatalog = (): CatalogSnapshot => ({
-  dishes: demoDishes,
-  categories: demoCategories,
-  candidates: demoCandidates,
-  source: "demo",
+const emptyCatalog = (): CatalogSnapshot => ({
+  location: null,
+  dishes: [],
+  categories: [],
+  candidates: [],
+  source: "database",
 });
 
 const assetUrl = (storageKey: string | undefined) => storageKey ? `/${storageKey.replace(/^\//, "")}` : "";
 
 export async function getPublicCatalog(): Promise<CatalogSnapshot> {
-  if (!process.env.DATABASE_URL) return demoCatalog();
+  if (!process.env.DATABASE_URL) return emptyCatalog();
 
   try {
     const db = getDb();
+    const [location] = await db.select({ name: locations.name, tagline: locations.tagline, address: locations.address, phone: locations.phone, logoUrl: locations.logoUrl }).from(locations).orderBy(asc(locations.createdAt)).limit(1);
     const productRows = await db.select({
       entry: menuEntries,
       product: products,
@@ -48,11 +51,12 @@ export async function getPublicCatalog(): Promise<CatalogSnapshot> {
         eq(menuEntries.surface, "visual"),
         eq(menuEntries.status, "published"),
         eq(products.status, "published"),
+        eq(categoryTable.isActive, true),
         eq(products.isAvailable, true),
       ))
       .orderBy(asc(menuEntries.sortOrder));
 
-    if (productRows.length === 0) return demoCatalog();
+    if (productRows.length === 0) return { ...emptyCatalog(), location: location ?? null };
     const productIds = productRows.map((row) => row.product.id);
     const mediaRows = await db.select({
       productId: productMedia.productId,
@@ -76,14 +80,12 @@ export async function getPublicCatalog(): Promise<CatalogSnapshot> {
     for (const row of mediaRows) mediaByProduct.set(row.productId, [...(mediaByProduct.get(row.productId) ?? []), row]);
     const ingredientsByProduct = new Map<string, string[]>();
     for (const row of ingredientRows) ingredientsByProduct.set(row.productId, [...(ingredientsByProduct.get(row.productId) ?? []), row.name]);
-    const categoryIcons = new Map(demoCategories.map((category) => [category.label, category.icon]));
     const catalogCategories = [
-      { label: "Recomendados", icon: "🔥" },
-      ...productRows.filter((row, index, rows) => rows.findIndex((item) => item.category.slug === row.category.slug) === index).map((row) => ({ label: row.category.name, icon: categoryIcons.get(row.category.name) ?? "✦" })),
-    ] as typeof demoCategories;
+      { label: "Recomendados", icon: "•" },
+      ...productRows.filter((row, index, rows) => rows.findIndex((item) => item.category.slug === row.category.slug) === index).map((row) => ({ label: row.category.name, icon: "•" })),
+    ];
 
     const dishes = productRows.map(({ product, category }) => {
-      const fallback = demoDishes.find((dish) => dish.slug === product.slug);
       const media = mediaByProduct.get(product.id) ?? [];
       const video = media.find((item) => item.kind === "video");
       const images = media.filter((item) => item.kind === "image");
@@ -93,9 +95,9 @@ export async function getPublicCatalog(): Promise<CatalogSnapshot> {
         category: category.name,
         description: product.description,
         price: product.priceCents / 100,
-        video: assetUrl(video?.storageKey) || fallback?.video || "",
-        image: assetUrl(images[0]?.storageKey) || fallback?.image || "",
-        poster: assetUrl(images[1]?.storageKey ?? images[0]?.storageKey) || fallback?.poster || "",
+        video: assetUrl(video?.storageKey),
+        image: assetUrl(images[0]?.storageKey),
+        poster: assetUrl(images[1]?.storageKey ?? images[0]?.storageKey),
         emoji: product.emoji,
         accent: product.accent,
         ingredients: ingredientsByProduct.get(product.id) ?? [],
@@ -122,7 +124,6 @@ export async function getPublicCatalog(): Promise<CatalogSnapshot> {
     for (const row of candidateMediaRows) mediaByCandidate.set(row.candidateId, [...(mediaByCandidate.get(row.candidateId) ?? []), row]);
 
     const candidates = candidateRows.map(({ candidate }) => {
-      const fallback = demoCandidates.find((item) => item.slug === candidate.slug);
       const media = mediaByCandidate.get(candidate.id) ?? [];
       const video = media.find((item) => item.kind === "video");
       const poster = media.find((item) => item.kind === "image");
@@ -137,8 +138,8 @@ export async function getPublicCatalog(): Promise<CatalogSnapshot> {
         votes,
         notifyCount,
         avgAttention: 0,
-        video: assetUrl(video?.storageKey) || fallback?.video || "",
-        poster: assetUrl(poster?.storageKey) || fallback?.poster || "",
+        video: assetUrl(video?.storageKey),
+        poster: assetUrl(poster?.storageKey),
         emoji: candidate.emoji,
         accent: candidate.accent,
         status: votes > 0 ? "Interés en curso" : "Aún reuniendo votos",
@@ -146,9 +147,9 @@ export async function getPublicCatalog(): Promise<CatalogSnapshot> {
       } satisfies Candidate;
     });
 
-    return { dishes, categories: catalogCategories, candidates, source: "database" };
+    return { location: location ?? null, dishes, categories: catalogCategories, candidates, source: "database" };
   } catch (error) {
-    console.warn("No se pudo cargar el catálogo desde PostgreSQL; se usa el contenido demo.", error);
-    return demoCatalog();
+    console.error("No se pudo cargar el catálogo desde PostgreSQL.", error);
+    return emptyCatalog();
   }
 }

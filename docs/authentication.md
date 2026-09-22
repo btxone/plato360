@@ -8,6 +8,7 @@
 - La cookie es `HttpOnly`, `SameSite=Strict`, `Path=/` y `Secure` en producción.
 - Login, logout y cambio de contraseña escriben auditoría.
 - Cinco fallos consecutivos bloquean temporalmente al usuario almacenado y el limitador de proceso protege también la cuenta externa SuperAdmin.
+- Las contraseñas nuevas, temporales y restablecidas deben tener al menos 6 caracteres.
 
 ## Variables mínimas
 

@@ -3,10 +3,8 @@
 import { ArrowUpRight, Check, ChevronLeft, MoreHorizontal, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
-import { type Candidate } from "@/data/candidates";
-import { restaurant } from "@/data/restaurant";
-import { type Dish } from "@/data/dishes";
+import type { ReactNode } from "react";
+import type { Candidate, Dish } from "@/lib/catalog-types";
 
 export type ToastMessage = { id: number; message: string } | null;
 export type Cart = Record<string, number>;
@@ -26,22 +24,10 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
     <span className={`brand-lockup ${compact ? "brand-lockup--compact" : ""}`}>
       <span className="brand-symbol">✦</span>
       <span>
-        <strong>{restaurant.name}</strong>
-        {!compact && <small>{restaurant.tagline}</small>}
+        <strong>Plato360</strong>
+        {!compact && <small>Carta digital</small>}
       </span>
     </span>
-  );
-}
-
-export function AppRibbon({ restaurantView = false }: { restaurantView?: boolean }) {
-  const go = useNavigation();
-  return (
-    <div className="app-ribbon" aria-label="Navegación principal">
-      <span className="app-ribbon__label"><span className="app-dot" /> CASA BRASA</span>
-      <span className="app-ribbon__divider" />
-      <button className={!restaurantView ? "is-active" : ""} onClick={() => go("/carta")}>Vista cliente</button>
-      <button className={restaurantView ? "is-active" : ""} onClick={() => go("/carta/restaurante")}>Vista restaurante</button>
-    </div>
   );
 }
 
@@ -62,33 +48,13 @@ export function Toast({ toast, onClose }: { toast: ToastMessage; onClose: () => 
   );
 }
 
-export function FallbackVisual({ item, candidate = false }: { item: Dish | Candidate; candidate?: boolean }) {
-  return (
-    <div className={`fallback-visual ${candidate ? "fallback-visual--candidate" : ""}`} style={{ "--fallback-accent": item.accent } as CSSProperties}>
-      <span className="fallback-visual__grain" />
-      <span className="fallback-visual__orb fallback-visual__orb--one" />
-      <span className="fallback-visual__orb fallback-visual__orb--two" />
-      <div className="fallback-visual__plate">
-        <span className="fallback-visual__emoji" aria-hidden="true">{item.emoji}</span>
-        <span className="fallback-visual__shine" />
-      </div>
-      <div className="fallback-visual__caption">
-        <span>Contenido visual</span>
-        <strong>{candidate ? "Plato en prueba" : "Video del plato"}</strong>
-      </div>
-    </div>
-  );
-}
-
 export function MediaVisual({
   item,
   active = true,
-  candidate = false,
   compact = false,
 }: {
   item: Dish | Candidate;
   active?: boolean;
-  candidate?: boolean;
   compact?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
@@ -106,8 +72,7 @@ export function MediaVisual({
 
   return (
     <div className={`media-visual ${compact ? "media-visual--compact" : ""}`}>
-      <FallbackVisual item={item} candidate={candidate} />
-      {!failed && (
+      {!failed && item.video && (
         <video
           ref={videoRef}
           className="media-visual__video"
@@ -121,6 +86,7 @@ export function MediaVisual({
           aria-label={`Video de ${item.name}`}
         />
       )}
+      {(!item.video || failed) && <div className="media-visual__missing">Video no disponible</div>}
       <div className="media-visual__vignette" />
     </div>
   );

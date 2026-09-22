@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { changePassword, getCurrentSession, InvalidCredentialsError } from "@/lib/auth";
+import { changePassword, getCurrentSession, InvalidCredentialsError, minimumPasswordLength } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1).max(256),
-  newPassword: z.string().min(12).max(256),
+  newPassword: z.string().min(minimumPasswordLength).max(256),
 });
 
 export async function POST(request: Request) {
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   const parsed = passwordSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: "La nueva contraseña debe tener al menos 12 caracteres." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "La nueva contraseña debe tener al menos 6 caracteres." }, { status: 400 });
   try {
     await changePassword(session, parsed.data.currentPassword, parsed.data.newPassword);
     return NextResponse.json({ ok: true });

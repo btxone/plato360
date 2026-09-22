@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { authenticateCredentials, createSession, InvalidCredentialsError, sessionCookieName, sessionCookieOptions } from "@/lib/auth";
+import { authenticateCredentials, createSession, InvalidCredentialsError, minimumPasswordLength, sessionCookieName, sessionCookieOptions } from "@/lib/auth";
 import { LoginRateLimitError } from "@/lib/auth-rate-limit";
 
 export const runtime = "nodejs";
 
 const loginSchema = z.object({
   username: z.string().trim().min(1).max(120),
-  password: z.string().min(1).max(256),
+  password: z.string().min(minimumPasswordLength).max(256),
 });
 
 export async function POST(request: Request) {
@@ -18,8 +18,12 @@ export async function POST(request: Request) {
     const rawToken = await createSession(identity);
     const response = NextResponse.json({
       user: {
-        username: identity.principalLabel,
+        id: identity.userId ?? "superadmin",
+        principalLabel: identity.principalLabel,
         role: identity.role,
+        locationId: identity.locationId,
+        locationName: identity.locationName,
+        locationLogoUrl: identity.locationLogoUrl,
         forcePasswordChange: identity.forcePasswordChange,
       },
     });

@@ -3,13 +3,14 @@ import argon2 from "argon2";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { getDb } from "@/db";
-import { auditLogs, authSessions, users, userRole } from "@/db/schema";
+import { auditLogs, authSessions, locations, users, userRole } from "@/db/schema";
 import { assertLoginAllowed, registerLoginFailure, registerLoginSuccess } from "@/lib/auth-rate-limit";
 
 export const sessionCookieName = "plato360_session";
 export const sessionTtlSeconds = 12 * 60 * 60;
 export const maxFailedLoginAttempts = 5;
 export const loginLockMinutes = 15;
+export const minimumPasswordLength = 6;
 
 const passwordOptions = {
   type: argon2.argon2id,
@@ -26,6 +27,8 @@ export type CurrentSession = {
   principalLabel: string;
   userId: string | null;
   locationId: string | null;
+  locationName: string | null;
+  locationLogoUrl: string | null;
   role: SessionRole;
   forcePasswordChange: boolean;
 };
@@ -56,7 +59,9 @@ export async function verifyPassword(password: string, passwordHash: string) {
 
 export function getSuperAdminConfig() {
   const username = process.env.SUPERADMIN_USERNAME?.trim();
-  const passwordHash = process.env.SUPERADMIN_PASSWORD_HASH?.trim();
+  // Compose uses $$ to carry a literal dollar through interpolation. Accept
+  // that representation as well when the same .env is used outside Docker.
+  const passwordHash = process.env.SUPERADMIN_PASSWORD_HASH?.trim().replace(/\$\$/g, "$");
   if (!username || !passwordHash) {
     throw new AuthConfigurationError("Faltan SUPERADMIN_USERNAME o SUPERADMIN_PASSWORD_HASH.");
   }
@@ -130,6 +135,8 @@ export async function authenticateCredentials(usernameInput: string, password: s
       subjectType: "superadmin" as const,
       userId: null,
       locationId: null,
+      locationName: null,
+      locationLogoUrl: null,
       principalLabel: username,
       role: "superadmin" as const,
       forcePasswordChange: false,
@@ -152,10 +159,13 @@ export async function authenticateCredentials(usernameInput: string, password: s
   registerLoginSuccess(username);
   await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null, lastLoginAt: new Date(), updatedAt: new Date() }).where(eq(users.id, user.id));
   await writeAudit({ locationId: user.locationId, actorUserId: user.id, actorPrincipal: user.username, action: "auth.login_succeeded", metadata: { role: user.role } });
+  const [location] = await db.select({ name: locations.name, logoUrl: locations.logoUrl }).from(locations).where(eq(locations.id, user.locationId)).limit(1);
   return {
     subjectType: "user" as const,
     userId: user.id,
     locationId: user.locationId,
+    locationName: location?.name ?? null,
+    locationLogoUrl: location?.logoUrl ?? null,
     principalLabel: user.username,
     role: user.role,
     forcePasswordChange: user.forcePasswordChange,
@@ -182,7 +192,7 @@ export async function getCurrentSession() {
   if (!rawToken) return null;
 
   const db = getDb();
-  const [row] = await db.select({ session: authSessions, user: users }).from(authSessions).leftJoin(users, eq(authSessions.userId, users.id)).where(and(
+  const [row] = await db.select({ session: authSessions, user: users, location: locations }).from(authSessions).leftJoin(users, eq(authSessions.userId, users.id)).leftJoin(locations, eq(users.locationId, locations.id)).where(and(
     eq(authSessions.tokenDigest, digestToken(rawToken)),
     isNull(authSessions.revokedAt),
     gt(authSessions.expiresAt, new Date()),
@@ -197,6 +207,8 @@ export async function getCurrentSession() {
     principalLabel: row.session.principalLabel,
     userId: row.session.userId,
     locationId: row.user?.locationId ?? null,
+    locationName: row.location?.name ?? null,
+    locationLogoUrl: row.location?.logoUrl ?? null,
     role: row.session.subjectType === "superadmin" ? "superadmin" : row.user?.role ?? "mozo",
     forcePasswordChange: row.user?.forcePasswordChange ?? false,
   } satisfies CurrentSession;

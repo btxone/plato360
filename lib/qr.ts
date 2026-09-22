@@ -46,6 +46,16 @@ export function signQrPayload(payload: QrPayload) {
   return `${encodedPayload}.${signatureFor(encodedPayload)}`;
 }
 
+export function getQrToken(qr: Pick<typeof qrCodes.$inferSelect, "publicId" | "locationId" | "tableLabel" | "expiresAt">) {
+  return signQrPayload({
+    v: 1,
+    publicId: qr.publicId,
+    locationId: qr.locationId,
+    tableLabel: qr.tableLabel,
+    exp: qr.expiresAt ? Math.floor(qr.expiresAt.getTime() / 1000) : null,
+  });
+}
+
 export function verifyQrToken(token: string): QrPayload {
   const [encodedPayload, signature] = token.split(".");
   if (!encodedPayload || !signature) throw new InvalidQrError();

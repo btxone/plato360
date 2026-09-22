@@ -40,6 +40,7 @@ export async function requireOrdersSession() {
 export function publicOrderView(order: PublicOrder, items: PublicOrderItem[]) {
   return {
     id: order.id,
+    referenceCode: order.id.slice(0, 8).toUpperCase(),
     locationId: order.locationId,
     dinerSessionId: order.dinerSessionId,
     tableLabel: order.tableLabel,

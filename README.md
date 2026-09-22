@@ -1,6 +1,6 @@
-# Casa Brasa · Menú Visual
+# Plato360 · Producto operativo
 
-Sitio comercial para restaurantes: una carta tipo Reels con contenido visual, un pedido local, platos “Tu decides” y dos vistas de restaurante con datos de ejemplo.
+Producto para restaurantes: carta pública de videos, pedidos asociados a mesa, QR operativos y consola autenticada para SuperAdmin, Admin y Mozo. El contenido visible se carga desde PostgreSQL.
 
 ## Ejecutar en desarrollo
 
@@ -47,15 +47,13 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 
 ## Rutas
 
-- `/` — landing comercial.
-- `/carta` — carta visual para clientes.
-- `/carta/tradicional` — carta digital tradicional con fotos y texto, sin videos.
+- `/` — redirección a la carta.
+- `/carta` — carta pública de videos publicada en el local.
 - `/carta/plato/[slug]` — detalle de un plato.
 - `/carta/pedido` — selección local del pedido.
 - `/carta/proximamente` — platos futuros en prueba.
 - `/carta/proximamente/[slug]` — detalle de un plato futuro.
-- `/carta/restaurante` — resumen de interés.
-- `/carta/restaurante/pruebas` — ranking de platos futuros.
+- `/panel` — consola operativa protegida por sesión. `/admin` redirige a esta ruta para conservar accesos anteriores.
 - `/api/health` — comprobación de disponibilidad para Docker y el proxy.
 - `/api/public/session` — abre o reutiliza la sesión anónima de una mesa a partir de un token QR.
 - `/api/public/orders` — crea y consulta pedidos asociados a la sesión de la mesa.
@@ -63,17 +61,17 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 - `/api/public/candidates/:slug/interest` — registra un email interesado, sin duplicados.
 - `/api/public/telemetry` — registra eventos anónimos idempotentes de la sesión QR.
 - `/api/admin/orders` — bandeja protegida para consultar y atender pedidos por local.
+- `/api/admin/users` — gestión de usuarios internos por rol.
+- `/api/admin/qr` — emisión, consulta y revocación de QR.
+- `/api/admin/features` — funciones del local, sólo para SuperAdmin.
 
 ## Personalización rápida
 
-- Restaurante, tagline, ubicación, logo y WhatsApp: `data/restaurant.ts`.
-- Platos, precios, copy, ingredientes y archivos visuales: `data/dishes.ts`.
-- Assets públicos listos para el VPS: `public/assets/`.
-- Platos futuros y votos de ejemplo: `data/candidates.ts`.
-- Datos del dashboard e insights: `data/analytics.ts`.
+- Los fixtures iniciales de carga están en `data/` y sólo los consume `npm run db:seed`; la aplicación no los usa como fallback.
+- El contenido operativo se administra en PostgreSQL y sus medios se sirven desde `public/assets/`.
 - Sistema visual completo: `app/globals.css`.
 
-El catálogo público se carga desde PostgreSQL cuando `DATABASE_URL` está disponible y existen entradas publicadas; la estrategia de fallback y las reglas de publicación están documentadas en `docs/catalog-public.md`.
+El catálogo público sólo muestra productos publicados y disponibles en PostgreSQL. Si la base no está configurada o no tiene contenido, la carta muestra un estado vacío y no inventa datos.
 
 Los códigos QR, las sesiones anónimas, los pedidos públicos, la participación en candidatos, la telemetría y la bandeja operativa están documentados en `docs/qr-service.md`, `docs/public-session.md`, `docs/public-orders.md`, `docs/public-candidates.md`, `docs/telemetry.md` y `docs/admin-orders.md`.
 
@@ -93,8 +91,8 @@ public/assets/
 
 Al desplegar, se debe copiar la carpeta `public/assets/` junto con la aplicación. Las rutas públicas empiezan con `/assets/`, por lo que funcionan igual en local y en el VPS.
 
-La interfaz detecta si un video todavía no existe y muestra un fallback visual; cada archivo puede reemplazarse sin editar componentes.
+La carta reproduce únicamente videos publicados. Si un medio falta, se informa el estado sin sustituirlo por contenido sintético.
 
 ## Estado de la carta
 
-Los votos y los avisos todavía usan estado local del navegador y `localStorage`. Los pedidos ya se persisten en PostgreSQL cuando la persona entra desde una sesión QR válida.
+Los pedidos, votos, avisos y eventos de telemetría se persisten en PostgreSQL cuando la persona entra desde una sesión QR válida. La sesión del carrito sólo conserva la selección actual del navegador hasta enviar el pedido.

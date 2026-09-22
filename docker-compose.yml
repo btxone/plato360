@@ -31,6 +31,8 @@ services:
       SUPERADMIN_PASSWORD_HASH: ${SUPERADMIN_PASSWORD_HASH:?Define SUPERADMIN_PASSWORD_HASH in .env}
       QR_HMAC_SECRET: ${QR_HMAC_SECRET:?Define QR_HMAC_SECRET in .env}
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost}
+    volumes:
+      - ./public/assets:/app/public/assets
     expose:
       - "3000"
     depends_on:

@@ -7,9 +7,9 @@ Las rutas `/`, `/carta` y sus variantes cargan un `CatalogSnapshot` en el servid
 1. Si `DATABASE_URL` existe y hay contenido publicado, se consultan `products`, `categories`, `menu_entries`, `ingredients`, `media_assets`, `product_media` y las tablas de candidatos.
 2. Solo se exponen entradas visuales publicadas, disponibles y asociadas al local.
 3. Los votos e interesados de candidatos se cuentan desde PostgreSQL. Si no hay muestra, la interfaz muestra “todavía sin muestra” o “telemetría pendiente” en vez de porcentajes inventados.
-4. Si la base no está configurada, está vacía o no responde, se usa el contenido demo para que el sitio siga siendo navegable durante la migración.
+4. Si la base no está configurada, está vacía o no responde, se devuelve un catálogo vacío y la interfaz informa que todavía no hay platos publicados.
 
-El fallback es deliberadamente temporal: la aplicación registra la incidencia en el servidor y el despliegue real debe ejecutar migraciones y `npm run db:seed` antes de retirar los datos demo.
+No existe fallback de datos sintéticos en runtime. `npm run db:seed` es una carga inicial explícita para un entorno nuevo; una vez cargado, la carta depende únicamente del contenido publicado en PostgreSQL.
 
 ## Medios
 

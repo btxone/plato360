@@ -44,4 +44,4 @@ El contenido usa `draft`, `scheduled`, `published` y `retired`. La disponibilida
 
 ## Pendiente de los siguientes hitos
 
-El esquema no sustituye todavía las fuentes estáticas de la interfaz ni implementa los servicios de autenticación, QR, pedidos o telemetría. Es la base de persistencia para conectar esos servicios de forma incremental, manteniendo la demo funcional durante la migración.
+El esquema es la fuente de persistencia de autenticación, QR, pedidos, telemetría y catálogo publicado. Los archivos de `data/` se reservan para la carga inicial del seed y no se consultan como datos de respaldo en runtime.

@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
-import { hashPassword } from "@/lib/auth";
+import { hashPassword, minimumPasswordLength } from "@/lib/auth";
 import {
   AuthenticationRequiredError,
   assertCanManageRole,
@@ -19,7 +19,7 @@ export const runtime = "nodejs";
 const actionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("activate") }),
   z.object({ action: z.literal("suspend") }),
-  z.object({ action: z.literal("reset_password"), temporaryPassword: z.string().min(12).max(256) }),
+  z.object({ action: z.literal("reset_password"), temporaryPassword: z.string().min(minimumPasswordLength).max(256) }),
 ]);
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
