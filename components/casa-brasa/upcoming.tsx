@@ -6,7 +6,6 @@ import type { CSSProperties } from "react";
 import type { Candidate } from "@/data/candidates";
 import { AppRibbon, BrandMark, DetailTop, MediaVisual, money, Pill } from "./shared";
 import { BottomNav } from "./navigation";
-import { Modal } from "./order";
 
 const confettiPieces = [
   { color: "#ef754f", x: "-118px", y: "-92px", rotate: "-20deg", delay: "0s" },
@@ -47,12 +46,14 @@ function VoteCelebration({ candidate }: { candidate: Candidate }) {
   );
 }
 
-function NotifyModal({ candidate, onClose, onSave }: { candidate: Candidate; onClose: () => void; onSave: (email: string) => void }) {
+function NotifyModal({ candidate, onClose, onSave }: { candidate: Candidate; onClose: () => void; onSave: (email: string) => Promise<boolean> | boolean }) {
   const [stage, setStage] = useState<"question" | "email" | "success">("question");
   const [canClose, setCanClose] = useState(false);
   const [localPart, setLocalPart] = useState("");
   const [domain, setDomain] = useState(emailDomains[0]);
   const [customDomain, setCustomDomain] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const timer = window.setTimeout(() => setCanClose(true), 2000);
@@ -80,7 +81,20 @@ function NotifyModal({ candidate, onClose, onSave }: { candidate: Candidate; onC
           <>
             <h2 id="notify-modal-title">¿Dónde te avisamos?</h2>
             <p>Dejanos tu email y te avisaremos cuando este plato esté disponible.</p>
-            <form className="notify-form" onSubmit={(event) => { event.preventDefault(); if (canSubmit) { onSave(email); setStage("success"); } }}>
+            <form className="notify-form" onSubmit={async (event) => {
+              event.preventDefault();
+              if (!canSubmit || saving) return;
+              setSaving(true);
+              setErrorMessage("");
+              try {
+                if (await onSave(email)) setStage("success");
+                else setErrorMessage("No pudimos guardar tu interés. Probá nuevamente.");
+              } catch {
+                setErrorMessage("No pudimos guardar tu interés. Probá nuevamente.");
+              } finally {
+                setSaving(false);
+              }
+            }}>
               <label htmlFor="notify-email-local">Tu email</label>
               <div className="email-composer">
                 <input id="notify-email-local" type="text" inputMode="email" autoComplete="email" placeholder="tu nombre" value={localPart} onChange={(event) => setLocalPart(event.target.value)} />
@@ -91,7 +105,8 @@ function NotifyModal({ candidate, onClose, onSave }: { candidate: Candidate; onC
                 </select>
               </div>
               {domain === "otro" && <input className="custom-domain-input" type="text" placeholder="tudominio.com" value={customDomain} onChange={(event) => setCustomDomain(event.target.value)} aria-label="Otro dominio" />}
-              <button className="modal-action" type="submit" disabled={!canSubmit}>Guardar aviso</button>
+              {errorMessage && <small role="alert">{errorMessage}</small>}
+              <button className="modal-action" type="submit" disabled={!canSubmit || saving}>{saving ? "Guardando…" : "Guardar aviso"}</button>
             </form>
           </>
         )}
@@ -140,7 +155,7 @@ function CandidateSlide({ candidate, index, total, active, voted, onVote, onDeta
   );
 }
 
-export function UpcomingPage({ candidates, votes, cartCount, onVote, onNotify, go, onToast }: { candidates: Candidate[]; votes: Record<string, boolean>; cartCount: number; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+export function UpcomingPage({ candidates, votes, cartCount, onVote, onNotify, go, onToast }: { candidates: Candidate[]; votes: Record<string, boolean>; cartCount: number; onVote: (candidate: Candidate) => Promise<boolean>; onNotify: (candidate: Candidate, email: string) => Promise<boolean>; go: (href: string) => void; onToast: (message: string) => void }) {
   const feedRef = useRef<HTMLDivElement>(null);
   const voteTimer = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -162,9 +177,10 @@ export function UpcomingPage({ candidates, votes, cartCount, onVote, onNotify, g
     if (voteTimer.current) window.clearTimeout(voteTimer.current);
   }, []);
 
-  const handleVote = (candidate: Candidate) => {
+  const handleVote = async (candidate: Candidate) => {
     if (votes[candidate.slug]) return;
-    onVote(candidate);
+    const saved = await onVote(candidate);
+    if (!saved) return;
     setCelebratingSlug(candidate.slug);
     if (voteTimer.current) window.clearTimeout(voteTimer.current);
     voteTimer.current = window.setTimeout(() => {
@@ -204,13 +220,13 @@ export function UpcomingPage({ candidates, votes, cartCount, onVote, onNotify, g
         <div className="upcoming-progress" aria-live="polite">{String(activeIndex + 1).padStart(2, "0")} / {String(candidates.length).padStart(2, "0")}</div>
         <BottomNav active="upcoming" cartCount={cartCount} go={go} />
         {celebratingCandidate && <VoteCelebration candidate={celebratingCandidate} />}
-        {notifyCandidate && <NotifyModal candidate={notifyCandidate} onClose={() => setNotifyCandidate(null)} onSave={() => { onNotify(notifyCandidate); onToast("¡Listo! Te avisaremos cuando se estrene."); }} />}
+        {notifyCandidate && <NotifyModal candidate={notifyCandidate} onClose={() => setNotifyCandidate(null)} onSave={async (email) => { const saved = await onNotify(notifyCandidate, email); if (saved) onToast("¡Listo! Te avisaremos cuando se estrene."); return saved; }} />}
       </div>
     </main>
   );
 }
 
-export function CandidateDetailPage({ candidate, voted, notified, onVote, onNotify, go, onToast }: { candidate: Candidate; voted: boolean; notified: boolean; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+export function CandidateDetailPage({ candidate, voted, notified, onVote, onNotify, go, onToast }: { candidate: Candidate; voted: boolean; notified: boolean; onVote: (candidate: Candidate) => Promise<boolean>; onNotify: (candidate: Candidate, email: string) => Promise<boolean>; go: (href: string) => void; onToast: (message: string) => void }) {
   const [showNotifyModal, setShowNotifyModal] = useState(false);
-  return <main className="detail-page candidate-detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Próximo plato" onBack={() => go("/carta/proximamente")} /><div className="detail-hero"><MediaVisual item={candidate} candidate active /><div className="detail-hero__overlay"><Pill tone="accent">PRÓXIMO PLATO</Pill><span className="detail-hero__play"><Sparkles size={13} /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">EN PRUEBA</span><h1>{candidate.name}</h1></div><strong>{money(candidate.estimatedPrice)}<small> estimado</small></strong></div><p className="detail-description">{candidate.description}</p><div className="candidate-detail-stats"><span><strong>{candidate.wouldOrderPct > 0 ? `${candidate.wouldOrderPct}%` : "—"}</strong><small>{candidate.wouldOrderPct > 0 ? "la pediría" : "todavía sin muestra"}</small></span><span><strong>{candidate.votes > 0 ? candidate.votes : "—"}</strong><small>{candidate.votes > 0 ? "votos" : "todavía sin votos"}</small></span><span><strong>{candidate.avgAttention > 0 ? `${candidate.avgAttention} s` : "—"}</strong><small>{candidate.avgAttention > 0 ? "mirando" : "telemetría pendiente"}</small></span></div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{candidate.ingredients.length > 0 ? candidate.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>) : <span>Aún no hay ingredientes cargados.</span>}</div></div><div className="candidate-detail-actions"><button className={"detail-vote" + (voted ? " is-voted" : "")} onClick={() => { if (!voted) { onVote(candidate); onToast("¡Gracias! Tu voto cuenta."); } }} disabled={voted}>{voted ? <Check size={18} /> : <Heart size={18} />} {voted ? "Ya votaste" : "Lo pediría"}</button><button className={"detail-notify" + (notified ? " is-notified" : "")} onClick={() => { if (!notified) onNotify(candidate); setShowNotifyModal(true); }}>{notified ? <Check size={17} /> : <Bell size={17} />} {notified ? "Aviso anotado" : "Avisame cuando esté disponible"}</button></div><button className="back-to-menu" onClick={() => go("/carta/proximamente")}><ArrowLeft size={16} /> Ver todos los platos en prueba</button></div></div>{showNotifyModal && <Modal title="¡Anotado!" onClose={() => setShowNotifyModal(false)} actionLabel="Seguir viendo">En el producto real, el restaurante podría avisarte por WhatsApp o enviarte un beneficio cuando el plato esté disponible.</Modal>}</main>;
+  return <main className="detail-page candidate-detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Próximo plato" onBack={() => go("/carta/proximamente")} /><div className="detail-hero"><MediaVisual item={candidate} candidate active /><div className="detail-hero__overlay"><Pill tone="accent">PRÓXIMO PLATO</Pill><span className="detail-hero__play"><Sparkles size={13} /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">EN PRUEBA</span><h1>{candidate.name}</h1></div><strong>{money(candidate.estimatedPrice)}<small> estimado</small></strong></div><p className="detail-description">{candidate.description}</p><div className="candidate-detail-stats"><span><strong>{candidate.wouldOrderPct > 0 ? `${candidate.wouldOrderPct}%` : "—"}</strong><small>{candidate.wouldOrderPct > 0 ? "la pediría" : "todavía sin muestra"}</small></span><span><strong>{candidate.votes > 0 ? candidate.votes : "—"}</strong><small>{candidate.votes > 0 ? "votos" : "todavía sin votos"}</small></span><span><strong>{candidate.avgAttention > 0 ? `${candidate.avgAttention} s` : "—"}</strong><small>{candidate.avgAttention > 0 ? "mirando" : "telemetría pendiente"}</small></span></div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{candidate.ingredients.length > 0 ? candidate.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>) : <span>Aún no hay ingredientes cargados.</span>}</div></div><div className="candidate-detail-actions"><button className={"detail-vote" + (voted ? " is-voted" : "")} onClick={async () => { if (!voted && await onVote(candidate)) onToast("¡Gracias! Tu voto cuenta."); }} disabled={voted}>{voted ? <Check size={18} /> : <Heart size={18} />} {voted ? "Ya votaste" : "Lo pediría"}</button><button className={"detail-notify" + (notified ? " is-notified" : "")} onClick={() => { if (!notified) setShowNotifyModal(true); }} disabled={notified}>{notified ? <Check size={17} /> : <Bell size={17} />} {notified ? "Aviso anotado" : "Avisame cuando esté disponible"}</button></div><button className="back-to-menu" onClick={() => go("/carta/proximamente")}><ArrowLeft size={16} /> Ver todos los platos en prueba</button></div></div>{showNotifyModal && <NotifyModal candidate={candidate} onClose={() => setShowNotifyModal(false)} onSave={async (email) => { const saved = await onNotify(candidate, email); if (saved) onToast("¡Listo! Te avisaremos cuando se estrene."); return saved; }} />}</main>;
 }

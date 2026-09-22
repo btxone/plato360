@@ -58,6 +58,8 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 - `/api/health` — comprobación de disponibilidad para Docker y el proxy.
 - `/api/public/session` — abre o reutiliza la sesión anónima de una mesa a partir de un token QR.
 - `/api/public/orders` — crea y consulta pedidos asociados a la sesión de la mesa.
+- `/api/public/candidates/:slug/vote` — registra un voto por sesión para un plato en prueba.
+- `/api/public/candidates/:slug/interest` — registra un email interesado, sin duplicados.
 - `/api/admin/orders` — bandeja protegida para consultar y atender pedidos por local.
 
 ## Personalización rápida
@@ -71,7 +73,7 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 
 El catálogo público se carga desde PostgreSQL cuando `DATABASE_URL` está disponible y existen entradas publicadas; la estrategia de fallback y las reglas de publicación están documentadas en `docs/catalog-public.md`.
 
-Los códigos QR, las sesiones anónimas, los pedidos públicos y la bandeja operativa están documentados en `docs/qr-service.md`, `docs/public-session.md`, `docs/public-orders.md` y `docs/admin-orders.md`.
+Los códigos QR, las sesiones anónimas, los pedidos públicos, la participación en candidatos y la bandeja operativa están documentados en `docs/qr-service.md`, `docs/public-session.md`, `docs/public-orders.md`, `docs/public-candidates.md` y `docs/admin-orders.md`.
 
 ## Assets
 

@@ -77,8 +77,33 @@ export default function CasaBrasaSite({ initialCatalog }: { initialCatalog: Cata
   const decrement = (slug: string) => setCart((current) => { const next = { ...current }; if ((next[slug] ?? 0) <= 1) delete next[slug]; else next[slug] -= 1; return next; });
   const remove = (slug: string) => setCart((current) => { const next = { ...current }; delete next[slug]; return next; });
   const showToast = (message: string) => setToast({ id: Date.now(), message });
-  const registerVote = (candidate: Candidate) => setVotes((current) => current[candidate.slug] ? current : ({ ...current, [candidate.slug]: true }));
-  const registerNotify = (candidate: Candidate) => setNotified((current) => current[candidate.slug] ? current : ({ ...current, [candidate.slug]: true }));
+  const registerVote = async (candidate: Candidate) => {
+    if (votes[candidate.slug]) return true;
+    setVotes((current) => ({ ...current, [candidate.slug]: true }));
+    try {
+      const response = await fetch(`/api/public/candidates/${encodeURIComponent(candidate.slug)}/vote`, { method: "POST" });
+      const body = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "No se pudo registrar el voto.");
+      return true;
+    } catch (error) {
+      setVotes((current) => { const next = { ...current }; delete next[candidate.slug]; return next; });
+      showToast(error instanceof Error ? error.message : "No se pudo registrar el voto.");
+      return false;
+    }
+  };
+  const registerNotify = async (candidate: Candidate, email: string) => {
+    if (notified[candidate.slug]) return true;
+    try {
+      const response = await fetch(`/api/public/candidates/${encodeURIComponent(candidate.slug)}/interest`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, acceptedNotification: true }) });
+      const body = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "No se pudo registrar el interés.");
+      setNotified((current) => ({ ...current, [candidate.slug]: true }));
+      return true;
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "No se pudo registrar el interés.");
+      return false;
+    }
+  };
 
   const parts = pathname.split("/").filter(Boolean);
   const isLanding = parts.length === 0;
