@@ -6,6 +6,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-plato360}
       POSTGRES_USER: ${POSTGRES_USER:-plato360}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -24,6 +26,11 @@ services:
       HOSTNAME: 0.0.0.0
       PORT: 3000
       DATABASE_URL: postgres://${POSTGRES_USER:-plato360}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-plato360}
+      DB_POOL_MAX: ${DB_POOL_MAX:-10}
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:?Define SUPERADMIN_USERNAME in .env}
+      SUPERADMIN_PASSWORD_HASH: ${SUPERADMIN_PASSWORD_HASH:?Define SUPERADMIN_PASSWORD_HASH in .env}
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET:?Define QR_HMAC_SECRET in .env}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost}
     expose:
       - "3000"
     depends_on:

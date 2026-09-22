@@ -32,9 +32,10 @@ El despliegue reproducible para el VPS está definido en `Dockerfile`, `docker-c
 
 1. Copiar `.env.example` a `.env` y definir `DOMAIN`, `POSTGRES_PASSWORD`, `SUPERADMIN_PASSWORD_HASH` y `QR_HMAC_SECRET`.
 2. Ejecutar `docker compose up -d --build`.
-3. Comprobar `https://DOMINIO/api/health` y revisar `docker compose ps`.
+3. Aplicar `npm run db:migrate` y `npm run db:seed` usando la conexión local `postgres://...@localhost:5433/plato360`.
+4. Comprobar `http://localhost/api/health` y revisar `docker compose ps`.
 
-La aplicación escucha dentro de Docker en el puerto 3000. PostgreSQL persiste en un volumen independiente. Caddy termina HTTPS, publica únicamente `/assets/*` desde `public/assets` y envía el resto al servicio de aplicación en los puertos 80 y 443.
+La aplicación escucha dentro de Docker en el puerto 3000. PostgreSQL persiste en un volumen independiente y publica el puerto 5433 solo en `127.0.0.1` para facilitar migraciones locales. Caddy termina HTTPS, publica únicamente `/assets/*` desde `public/assets` y envía el resto al servicio de aplicación en los puertos 80 y 443.
 
 Para aplicar migraciones en un entorno con PostgreSQL disponible:
 
