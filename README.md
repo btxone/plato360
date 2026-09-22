@@ -57,6 +57,7 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 - `/carta/restaurante/pruebas` — ranking de platos futuros.
 - `/api/health` — comprobación de disponibilidad para Docker y el proxy.
 - `/api/public/session` — abre o reutiliza la sesión anónima de una mesa a partir de un token QR.
+- `/api/public/orders` — crea y consulta pedidos asociados a la sesión de la mesa.
 
 ## Personalización rápida
 
@@ -69,7 +70,7 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 
 El catálogo público se carga desde PostgreSQL cuando `DATABASE_URL` está disponible y existen entradas publicadas; la estrategia de fallback y las reglas de publicación están documentadas en `docs/catalog-public.md`.
 
-Los códigos QR y las sesiones anónimas están documentados en `docs/qr-service.md` y `docs/public-session.md`.
+Los códigos QR, las sesiones anónimas y los pedidos están documentados en `docs/qr-service.md`, `docs/public-session.md` y `docs/public-orders.md`.
 
 ## Assets
 
@@ -91,4 +92,4 @@ La interfaz detecta si un video todavía no existe y muestra un fallback visual;
 
 ## Estado de la carta
 
-El pedido, los votos y los avisos usan estado local del navegador y `localStorage`. No se envía ningún pedido ni se conecta ningún servicio externo.
+Los votos y los avisos todavía usan estado local del navegador y `localStorage`. Los pedidos ya se persisten en PostgreSQL cuando la persona entra desde una sesión QR válida.

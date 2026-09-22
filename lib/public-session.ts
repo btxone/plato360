@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { createOpaqueToken, digestToken } from "@/lib/auth";
@@ -6,6 +7,13 @@ import { resolveQrToken } from "@/lib/qr";
 
 export const publicSessionCookieName = "plato360_diner_session";
 export const publicSessionTtlSeconds = 12 * 60 * 60;
+
+export class PublicSessionRequiredError extends Error {
+  constructor() {
+    super("Escaneá el código QR de tu mesa para continuar.");
+    this.name = "PublicSessionRequiredError";
+  }
+}
 
 export async function openPublicSession(qrToken: string, existingRawToken?: string) {
   const qr = await resolveQrToken(qrToken);
@@ -40,4 +48,15 @@ export function publicSessionView(session: typeof dinerSessions.$inferSelect) {
     createdAt: session.createdAt,
     lastSeenAt: session.lastSeenAt,
   };
+}
+
+export async function getCurrentPublicSession() {
+  const cookieStore = await cookies();
+  const rawToken = cookieStore.get(publicSessionCookieName)?.value;
+  if (!rawToken) return null;
+  const db = getDb();
+  const [session] = await db.select().from(dinerSessions).where(eq(dinerSessions.tokenDigest, digestToken(rawToken))).limit(1);
+  if (!session) return null;
+  const [updated] = await db.update(dinerSessions).set({ lastSeenAt: new Date(), updatedAt: new Date() }).where(eq(dinerSessions.id, session.id)).returning();
+  return updated;
 }

@@ -89,7 +89,7 @@ export default function CasaBrasaSite({ initialCatalog }: { initialCatalog: Cata
     const dish = catalog.dishes.find((item) => item.slug === parts[2]);
     return <>{dish ? <DishDetailPage dish={dish} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
   }
-  if (parts[1] === "pedido") return <><OrderPage dishes={catalog.dishes} cart={cart} onIncrement={increment} onDecrement={decrement} onRemove={remove} go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (parts[1] === "pedido") return <><OrderPage dishes={catalog.dishes} cart={cart} onIncrement={increment} onDecrement={decrement} onRemove={remove} onClear={() => setCart({})} go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   if (parts[1] === "proximamente" && parts[2]) {
     const candidate = catalog.candidates.find((item) => item.slug === parts[2]);
     return <>{candidate ? <CandidateDetailPage candidate={candidate} voted={Boolean(votes[candidate.slug])} notified={Boolean(notified[candidate.slug])} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
