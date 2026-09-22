@@ -52,6 +52,25 @@ export default function CasaBrasaSite({ initialCatalog }: { initialCatalog: Cata
   useEffect(() => { if (hydrated) window.localStorage.setItem("casa-brasa-votes", JSON.stringify(votes)); }, [votes, hydrated]);
   useEffect(() => { if (hydrated) window.localStorage.setItem("casa-brasa-notified", JSON.stringify(notified)); }, [notified, hydrated]);
 
+  useEffect(() => {
+    const qrToken = new URLSearchParams(window.location.search).get("qr");
+    if (!qrToken) return;
+    let cancelled = false;
+    const cleanUrl = () => window.history.replaceState(null, "", `${window.location.pathname}${window.location.hash}`);
+    void fetch("/api/public/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ qrToken }),
+    }).then(async (response) => {
+      const body = await response.json() as { session?: { tableLabel: string }; error?: string };
+      if (!response.ok) throw new Error(body.error ?? "No se pudo conectar la mesa.");
+      if (!cancelled && body.session) setToast({ id: Date.now(), message: `Mesa ${body.session.tableLabel} conectada` });
+    }).catch((error: unknown) => {
+      if (!cancelled) setToast({ id: Date.now(), message: error instanceof Error ? error.message : "No se pudo conectar la mesa." });
+    }).finally(cleanUrl);
+    return () => { cancelled = true; };
+  }, []);
+
   const cartCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
   const addToCart = (dish: Dish) => setCart((current) => ({ ...current, [dish.slug]: (current[dish.slug] ?? 0) + 1 }));
   const increment = (slug: string) => setCart((current) => ({ ...current, [slug]: (current[slug] ?? 0) + 1 }));

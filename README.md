@@ -56,6 +56,7 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 - `/carta/restaurante` — resumen de interés.
 - `/carta/restaurante/pruebas` — ranking de platos futuros.
 - `/api/health` — comprobación de disponibilidad para Docker y el proxy.
+- `/api/public/session` — abre o reutiliza la sesión anónima de una mesa a partir de un token QR.
 
 ## Personalización rápida
 
@@ -67,6 +68,8 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 - Sistema visual completo: `app/globals.css`.
 
 El catálogo público se carga desde PostgreSQL cuando `DATABASE_URL` está disponible y existen entradas publicadas; la estrategia de fallback y las reglas de publicación están documentadas en `docs/catalog-public.md`.
+
+Los códigos QR y las sesiones anónimas están documentados en `docs/qr-service.md` y `docs/public-session.md`.
 
 ## Assets
 
