@@ -100,12 +100,15 @@ async function main() {
       slug: dish.slug,
       name: dish.name,
       description: dish.description,
+      emoji: dish.emoji,
+      accent: dish.accent,
+      tags: dish.tags ?? [],
       priceCents: cents(dish.price),
       status: "published",
       isAvailable: true,
       publishedAt: now,
     }).returning({ id: products.id }))[0].id;
-    await db.update(products).set({ categoryId, name: dish.name, description: dish.description, priceCents: cents(dish.price), status: "published", isAvailable: true, publishedAt: now, updatedAt: now }).where(eq(products.id, productId));
+    await db.update(products).set({ categoryId, name: dish.name, description: dish.description, emoji: dish.emoji, accent: dish.accent, tags: dish.tags ?? [], priceCents: cents(dish.price), status: "published", isAvailable: true, publishedAt: now, updatedAt: now }).where(eq(products.id, productId));
 
     for (const [sortOrder, ingredientName] of dish.ingredients.entries()) {
       const [existingIngredient] = await db.select({ id: ingredients.id }).from(ingredients).where(and(eq(ingredients.locationId, locationId), eq(ingredients.name, ingredientName))).limit(1);
@@ -141,11 +144,13 @@ async function main() {
       slug: candidate.slug,
       name: candidate.name,
       description: candidate.description,
+      emoji: candidate.emoji,
+      accent: candidate.accent,
       status: "published",
       finalPriceCents: cents(candidate.estimatedPrice),
       publishedAt: now,
     }).returning({ id: candidateCampaigns.id }))[0].id;
-    await db.update(candidateCampaigns).set({ categoryId, name: candidate.name, description: candidate.description, status: "published", finalPriceCents: cents(candidate.estimatedPrice), publishedAt: now, updatedAt: now }).where(eq(candidateCampaigns.id, candidateId));
+    await db.update(candidateCampaigns).set({ categoryId, name: candidate.name, description: candidate.description, emoji: candidate.emoji, accent: candidate.accent, status: "published", finalPriceCents: cents(candidate.estimatedPrice), publishedAt: now, updatedAt: now }).where(eq(candidateCampaigns.id, candidateId));
     for (const [sortOrder, media] of [
       { path: candidate.video, kind: "video" as const, isPrimary: true },
       { path: candidate.poster, kind: "image" as const, isPrimary: false },

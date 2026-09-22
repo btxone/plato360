@@ -2,12 +2,12 @@
 
 import { ArrowLeft, ArrowUpRight, Check, ChevronDown, Clock3, Eye, List, MapPin, Play, Plus, QrCode, ShoppingBag, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { categories, dishes, type Dish } from "@/data/dishes";
+import type { Dish } from "@/data/dishes";
 import { AppRibbon, ArrowButton, BrandMark, DetailTop, MediaVisual, money, Pill } from "./shared";
 import { BottomNav, CategorySheet, MenuHeader } from "./navigation";
 
-function DishCard({ dish, active, onDetails, onAdd }: { dish: Dish; active: boolean; onDetails: () => void; onAdd: () => void }) {
-  return <article className="dish-card"><MediaVisual item={dish} active={active} /><div className="dish-card__top"><Pill tone="accent">{dish.category}</Pill><span className="dish-card__counter">{String(dishes.indexOf(dish) + 1).padStart(2, "0")} / {String(dishes.length).padStart(2, "0")}</span></div><div className="dish-card__content"><div className="dish-card__label"><span className="live-dot" /> Recomendado de la casa</div><h2>{dish.name}</h2><p>{dish.description}</p><div className="dish-card__footer"><strong>{money(dish.price)}</strong><div className="dish-card__actions"><button className="dish-detail-link" onClick={onDetails}>Ver detalle <ArrowUpRight size={15} /></button><button className="add-button" onClick={onAdd}><Plus size={18} /> Agregar</button></div></div></div><div className="dish-card__swipe"><ChevronDown size={16} /><span>Deslizá para seguir</span></div></article>;
+function DishCard({ dish, active, position, total, onDetails, onAdd }: { dish: Dish; active: boolean; position: number; total: number; onDetails: () => void; onAdd: () => void }) {
+  return <article className="dish-card"><MediaVisual item={dish} active={active} /><div className="dish-card__top"><Pill tone="accent">{dish.category}</Pill><span className="dish-card__counter">{String(position + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span></div><div className="dish-card__content"><div className="dish-card__label"><span className="live-dot" /> Recomendado de la casa</div><h2>{dish.name}</h2><p>{dish.description}</p><div className="dish-card__footer"><strong>{money(dish.price)}</strong><div className="dish-card__actions"><button className="dish-detail-link" onClick={onDetails}>Ver detalle <ArrowUpRight size={15} /></button><button className="add-button" onClick={onAdd}><Plus size={18} /> Agregar</button></div></div></div><div className="dish-card__swipe"><ChevronDown size={16} /><span>Deslizá para seguir</span></div></article>;
 }
 
 function DishFeed({ filtered, onAdd, onDetails, onSeen }: { filtered: Dish[]; onAdd: (dish: Dish) => void; onDetails: (dish: Dish) => void; onSeen: (index: number) => void }) {
@@ -21,10 +21,10 @@ function DishFeed({ filtered, onAdd, onDetails, onSeen }: { filtered: Dish[]; on
     cards.forEach((card) => observer.observe(card));
     return () => observer.disconnect();
   }, [filtered, onSeen]);
-  return <div className="dish-feed" ref={feedRef}>{filtered.map((dish, index) => <div className="dish-feed__item" data-feed-index={index} key={dish.slug}><DishCard dish={dish} active={activeIndex === index} onDetails={() => onDetails(dish)} onAdd={() => onAdd(dish)} /></div>)}</div>;
+  return <div className="dish-feed" ref={feedRef}>{filtered.map((dish, index) => <div className="dish-feed__item" data-feed-index={index} key={dish.slug}><DishCard dish={dish} position={index} total={filtered.length} active={activeIndex === index} onDetails={() => onDetails(dish)} onAdd={() => onAdd(dish)} /></div>)}</div>;
 }
 
-export function ClientMenuPage({ cartCount, onAdd, go, onToast }: { cartCount: number; onAdd: (dish: Dish) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+export function ClientMenuPage({ dishes, categories, cartCount, onAdd, go, onToast }: { dishes: Dish[]; categories: { label: string; icon: string }[]; cartCount: number; onAdd: (dish: Dish) => void; go: (href: string) => void; onToast: (message: string) => void }) {
   const [category, setCategory] = useState("Recomendados");
   const [showCategories, setShowCategories] = useState(false);
   const [seen, setSeen] = useState(0);
@@ -36,7 +36,7 @@ function traditionalCategoryId(label: string) {
   return `traditional-${label.toLowerCase().replace(/\s+/g, "-")}`;
 }
 
-export function TraditionalMenuPage({ cartCount, onAdd, go, onToast }: { cartCount: number; onAdd: (dish: Dish) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+export function TraditionalMenuPage({ dishes, categories, cartCount, onAdd, go, onToast }: { dishes: Dish[]; categories: { label: string; icon: string }[]; cartCount: number; onAdd: (dish: Dish) => void; go: (href: string) => void; onToast: (message: string) => void }) {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const menuCategories = categories.filter((category) => category.label !== "Recomendados");
   const visibleDishes = selectedCategory === "Todos" ? dishes : dishes.filter((dish) => dish.category === selectedCategory);

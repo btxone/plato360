@@ -3,8 +3,9 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { candidates, type Candidate } from "@/data/candidates";
-import { getDish, type Dish } from "@/data/dishes";
+import type { Candidate } from "@/data/candidates";
+import type { Dish } from "@/data/dishes";
+import type { CatalogSnapshot } from "@/lib/catalog";
 import { Landing } from "@/components/casa-brasa/landing";
 import { OrderPage } from "@/components/casa-brasa/order";
 import { CandidateDetailPage, UpcomingPage } from "@/components/casa-brasa/upcoming";
@@ -17,9 +18,10 @@ import {
   useNavigation,
 } from "@/components/casa-brasa/shared";
 
-export default function CasaBrasaSite() {
+export default function CasaBrasaSite({ initialCatalog }: { initialCatalog: CatalogSnapshot }) {
   const pathname = usePathname();
   const go = useNavigation();
+  const catalog = initialCatalog;
   const [cart, setCart] = useState<Cart>({});
   const [votes, setVotes] = useState<Record<string, boolean>>({});
   const [notified, setNotified] = useState<Record<string, boolean>>({});
@@ -63,18 +65,18 @@ export default function CasaBrasaSite() {
   const isLanding = parts.length === 0;
   if (isLanding) return <><Landing go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   if (parts[0] !== "carta") return <><NotFoundState go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
-  if (parts[1] === "tradicional") return <><TraditionalMenuPage cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (parts[1] === "tradicional") return <><TraditionalMenuPage dishes={catalog.dishes} categories={catalog.categories} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   if (parts[1] === "plato" && parts[2]) {
-    const dish = getDish(parts[2]);
+    const dish = catalog.dishes.find((item) => item.slug === parts[2]);
     return <>{dish ? <DishDetailPage dish={dish} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
   }
-  if (parts[1] === "pedido") return <><OrderPage cart={cart} onIncrement={increment} onDecrement={decrement} onRemove={remove} go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (parts[1] === "pedido") return <><OrderPage dishes={catalog.dishes} cart={cart} onIncrement={increment} onDecrement={decrement} onRemove={remove} go={go} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   if (parts[1] === "proximamente" && parts[2]) {
-    const candidate = candidates.find((item) => item.slug === parts[2]);
+    const candidate = catalog.candidates.find((item) => item.slug === parts[2]);
     return <>{candidate ? <CandidateDetailPage candidate={candidate} voted={Boolean(votes[candidate.slug])} notified={Boolean(notified[candidate.slug])} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /> : <NotFoundState go={go} />}<Toast toast={toast} onClose={() => setToast(null)} /></>;
   }
-  if (parts[1] === "proximamente") return <><UpcomingPage votes={votes} cartCount={cartCount} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  if (parts[1] === "proximamente") return <><UpcomingPage candidates={catalog.candidates} votes={votes} cartCount={cartCount} onVote={registerVote} onNotify={registerNotify} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
   if (parts[1] === "restaurante" && parts[2] === "pruebas") return <RestaurantTests go={go} />;
   if (parts[1] === "restaurante") return <RestaurantOverview go={go} />;
-  return <><ClientMenuPage cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
+  return <><ClientMenuPage dishes={catalog.dishes} categories={catalog.categories} cartCount={cartCount} onAdd={addToCart} go={go} onToast={showToast} /><Toast toast={toast} onClose={() => setToast(null)} /></>;
 }

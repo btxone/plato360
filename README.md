@@ -66,6 +66,8 @@ El modelo relacional y sus decisiones están documentados en `docs/data-model.md
 - Datos del dashboard e insights: `data/analytics.ts`.
 - Sistema visual completo: `app/globals.css`.
 
+El catálogo público se carga desde PostgreSQL cuando `DATABASE_URL` está disponible y existen entradas publicadas; la estrategia de fallback y las reglas de publicación están documentadas en `docs/catalog-public.md`.
+
 ## Assets
 
 La carpeta pública completa está organizada así:

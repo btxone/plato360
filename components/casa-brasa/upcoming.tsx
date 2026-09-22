@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowUpRight, Bell, Check, ChevronDown, ChevronLeft, Heart, ShoppingBag, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { candidates, type Candidate } from "@/data/candidates";
+import type { Candidate } from "@/data/candidates";
 import { AppRibbon, BrandMark, DetailTop, MediaVisual, money, Pill } from "./shared";
 import { BottomNav } from "./navigation";
 import { Modal } from "./order";
@@ -107,14 +107,14 @@ function NotifyModal({ candidate, onClose, onSave }: { candidate: Candidate; onC
   );
 }
 
-function CandidateSlide({ candidate, index, active, voted, onVote, onDetails }: { candidate: Candidate; index: number; active: boolean; voted: boolean; onVote: () => void; onDetails: () => void }) {
+function CandidateSlide({ candidate, index, total, active, voted, onVote, onDetails }: { candidate: Candidate; index: number; total: number; active: boolean; voted: boolean; onVote: () => void; onDetails: () => void }) {
   return (
     <article className="candidate-slide" data-candidate-slide={index}>
       <MediaVisual item={candidate} candidate active={active} />
       <div className="candidate-slide__veil" />
       <div className="candidate-slide__top">
         <Pill tone="accent">EN PRUEBA</Pill>
-        <span>{String(index + 1).padStart(2, "0")} / {String(candidates.length).padStart(2, "0")}</span>
+        <span>{String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span>
       </div>
       <div className="candidate-slide__content">
         <span className="candidate-slide__eyebrow">TU DECIDES · PRÓXIMO PLATO</span>
@@ -124,7 +124,7 @@ function CandidateSlide({ candidate, index, active, voted, onVote, onDetails }: 
         </div>
         <p>{candidate.description}</p>
         <div className="candidate-slide__stats">
-          <span><strong>{candidate.wouldOrderPct}%</strong><small>dice que lo pediría</small></span>
+          <span><strong>{candidate.wouldOrderPct > 0 ? `${candidate.wouldOrderPct}%` : "—"}</strong><small>{candidate.wouldOrderPct > 0 ? "dice que lo pediría" : "todavía sin muestra"}</small></span>
           <span><strong>{candidate.status}</strong><small>nivel de interés</small></span>
         </div>
       </div>
@@ -140,7 +140,7 @@ function CandidateSlide({ candidate, index, active, voted, onVote, onDetails }: 
   );
 }
 
-export function UpcomingPage({ votes, cartCount, onVote, onNotify, go, onToast }: { votes: Record<string, boolean>; cartCount: number; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
+export function UpcomingPage({ candidates, votes, cartCount, onVote, onNotify, go, onToast }: { candidates: Candidate[]; votes: Record<string, boolean>; cartCount: number; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
   const feedRef = useRef<HTMLDivElement>(null);
   const voteTimer = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -193,6 +193,7 @@ export function UpcomingPage({ votes, cartCount, onVote, onNotify, go, onToast }
               key={candidate.slug}
               candidate={candidate}
               index={index}
+              total={candidates.length}
               active={index === activeIndex}
               voted={Boolean(votes[candidate.slug])}
               onVote={() => handleVote(candidate)}
@@ -211,5 +212,5 @@ export function UpcomingPage({ votes, cartCount, onVote, onNotify, go, onToast }
 
 export function CandidateDetailPage({ candidate, voted, notified, onVote, onNotify, go, onToast }: { candidate: Candidate; voted: boolean; notified: boolean; onVote: (candidate: Candidate) => void; onNotify: (candidate: Candidate) => void; go: (href: string) => void; onToast: (message: string) => void }) {
   const [showNotifyModal, setShowNotifyModal] = useState(false);
-  return <main className="detail-page candidate-detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Próximo plato" onBack={() => go("/carta/proximamente")} /><div className="detail-hero"><MediaVisual item={candidate} candidate active /><div className="detail-hero__overlay"><Pill tone="accent">PRÓXIMO PLATO</Pill><span className="detail-hero__play"><Sparkles size={13} /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">EN PRUEBA</span><h1>{candidate.name}</h1></div><strong>{money(candidate.estimatedPrice)}<small> estimado</small></strong></div><p className="detail-description">{candidate.description}</p><div className="candidate-detail-stats"><span><strong>{candidate.wouldOrderPct}%</strong><small>la pediría</small></span><span><strong>{candidate.votes}</strong><small>votos</small></span><span><strong>{candidate.avgAttention} s</strong><small>mirando</small></span></div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{candidate.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>)}</div></div><div className="candidate-detail-actions"><button className={"detail-vote" + (voted ? " is-voted" : "")} onClick={() => { if (!voted) { onVote(candidate); onToast("¡Gracias! Tu voto cuenta."); } }} disabled={voted}>{voted ? <Check size={18} /> : <Heart size={18} />} {voted ? "Ya votaste" : "Lo pediría"}</button><button className={"detail-notify" + (notified ? " is-notified" : "")} onClick={() => { if (!notified) onNotify(candidate); setShowNotifyModal(true); }}>{notified ? <Check size={17} /> : <Bell size={17} />} {notified ? "Aviso anotado" : "Avisame cuando esté disponible"}</button></div><button className="back-to-menu" onClick={() => go("/carta/proximamente")}><ArrowLeft size={16} /> Ver todos los platos en prueba</button></div></div>{showNotifyModal && <Modal title="¡Anotado!" onClose={() => setShowNotifyModal(false)} actionLabel="Seguir viendo">En el producto real, el restaurante podría avisarte por WhatsApp o enviarte un beneficio cuando el plato esté disponible.</Modal>}</main>;
+  return <main className="detail-page candidate-detail-page"><AppRibbon /><div className="detail-phone"><DetailTop label="Próximo plato" onBack={() => go("/carta/proximamente")} /><div className="detail-hero"><MediaVisual item={candidate} candidate active /><div className="detail-hero__overlay"><Pill tone="accent">PRÓXIMO PLATO</Pill><span className="detail-hero__play"><Sparkles size={13} /></span></div></div><div className="detail-body"><div className="detail-title-row"><div><span className="eyebrow-dark">EN PRUEBA</span><h1>{candidate.name}</h1></div><strong>{money(candidate.estimatedPrice)}<small> estimado</small></strong></div><p className="detail-description">{candidate.description}</p><div className="candidate-detail-stats"><span><strong>{candidate.wouldOrderPct > 0 ? `${candidate.wouldOrderPct}%` : "—"}</strong><small>{candidate.wouldOrderPct > 0 ? "la pediría" : "todavía sin muestra"}</small></span><span><strong>{candidate.votes > 0 ? candidate.votes : "—"}</strong><small>{candidate.votes > 0 ? "votos" : "todavía sin votos"}</small></span><span><strong>{candidate.avgAttention > 0 ? `${candidate.avgAttention} s` : "—"}</strong><small>{candidate.avgAttention > 0 ? "mirando" : "telemetría pendiente"}</small></span></div><div className="ingredients-block"><span className="eyebrow-dark">EN ESTE PLATO</span><div>{candidate.ingredients.length > 0 ? candidate.ingredients.map((ingredient) => <span key={ingredient}><Check size={14} />{ingredient}</span>) : <span>Aún no hay ingredientes cargados.</span>}</div></div><div className="candidate-detail-actions"><button className={"detail-vote" + (voted ? " is-voted" : "")} onClick={() => { if (!voted) { onVote(candidate); onToast("¡Gracias! Tu voto cuenta."); } }} disabled={voted}>{voted ? <Check size={18} /> : <Heart size={18} />} {voted ? "Ya votaste" : "Lo pediría"}</button><button className={"detail-notify" + (notified ? " is-notified" : "")} onClick={() => { if (!notified) onNotify(candidate); setShowNotifyModal(true); }}>{notified ? <Check size={17} /> : <Bell size={17} />} {notified ? "Aviso anotado" : "Avisame cuando esté disponible"}</button></div><button className="back-to-menu" onClick={() => go("/carta/proximamente")}><ArrowLeft size={16} /> Ver todos los platos en prueba</button></div></div>{showNotifyModal && <Modal title="¡Anotado!" onClose={() => setShowNotifyModal(false)} actionLabel="Seguir viendo">En el producto real, el restaurante podría avisarte por WhatsApp o enviarte un beneficio cuando el plato esté disponible.</Modal>}</main>;
 }
