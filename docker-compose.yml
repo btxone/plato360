@@ -1,22 +1,70 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-plato360}
+      POSTGRES_USER: ${POSTGRES_USER:-plato360}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build:
       context: .
-    container_name: plato360-app
-    environment:
-      CLOUDFLARE_CF_FETCH_ENABLED: "false"
-      HOST: "0.0.0.0"
-      ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
-      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-plato360-local}"
-      ADMIN_SESSION_SECRET: "${ADMIN_SESSION_SECRET:-plato360-local-session-secret}"
-      NODE_ENV: "production"
-      PORT: "4173"
-      WRANGLER_SEND_METRICS: "false"
-    ports:
-      - "127.0.0.1:${APP_PORT:-4173}:4173"
-    volumes:
-      - plato360-wrangler-state:/app/.wrangler/state
+      dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-plato360}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-plato360}
+      DB_POOL_MAX: ${DB_POOL_MAX:-10}
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:?Define SUPERADMIN_USERNAME in .env}
+      SUPERADMIN_PASSWORD_HASH: ${SUPERADMIN_PASSWORD_HASH:?Define SUPERADMIN_PASSWORD_HASH in .env}
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET:?Define QR_HMAC_SECRET in .env}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+    volumes:
+      - ./public/assets:/app/public/assets
+    expose:
+      - "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./public/assets:/srv/assets:ro
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
-  plato360-wrangler-state:
+  postgres_data:
+  caddy_data:
+  caddy_config:

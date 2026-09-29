@@ -1,12 +1,20 @@
-# Casa Brasa · Menú Visual
+# Plato360 · Producto operativo
 
-MVP de carta digital para restaurantes: una carta tipo Reels con contenido visual, una carta tradicional con fotos y una sección “Tu decides” para validar nuevos platos.
+Producto para restaurantes: carta pública de videos, pedidos asociados a mesa, QR operativos y consola autenticada para SuperAdmin, Admin y Mozo. El contenido visible se carga desde PostgreSQL.
 
-## Ejecutar
+## Ejecutar en desarrollo
 
 ```bash
 npm install
 npm run dev
+```
+
+El proyecto se ejecuta con Next.js sobre Node.js. El adaptador Vinext/Cloudflare se conserva únicamente como compatibilidad temporal en los comandos `*:vinext`.
+
+Para ejecutar la prueba de humo de las rutas principales con el servidor local activo:
+
+```bash
+npm run test:smoke
 ```
 
 Para generar la versión de producción:
@@ -16,56 +24,56 @@ npm run build
 npm run start
 ```
 
-Para ejecutarla con el runtime preparado para VPS:
+El comando `start` usa el servidor standalone generado por Next.js, que es el mismo artefacto que ejecuta la imagen Docker.
+
+## Despliegue en VPS
+
+El despliegue reproducible para el VPS está definido en `Dockerfile`, `docker-compose.yml` y `Caddyfile`.
+
+1. Copiar `.env.example` a `.env` y definir `DOMAIN`, `POSTGRES_PASSWORD`, `SUPERADMIN_PASSWORD_HASH` y `QR_HMAC_SECRET`.
+2. Ejecutar `docker compose up -d --build`.
+3. Aplicar `npm run db:migrate` y `npm run db:seed` usando la conexión local `postgres://...@localhost:5433/plato360`.
+4. Comprobar `http://localhost/api/health` y revisar `docker compose ps`.
+
+La aplicación escucha dentro de Docker en el puerto 3000. PostgreSQL persiste en un volumen independiente y publica el puerto 5433 solo en `127.0.0.1` para facilitar migraciones locales. Caddy termina HTTPS, publica únicamente `/assets/*` desde `public/assets` y envía el resto al servicio de aplicación en los puertos 80 y 443.
+
+Para aplicar migraciones en un entorno con PostgreSQL disponible:
 
 ```bash
-npm run build
-npm run start:vps
+npm run db:migrate
 ```
 
-El arranque prepara automáticamente la base D1 local con `db/seed.sql` y deja el health check disponible en `/api/health`. La configuración Docker inicial se encuentra en `Dockerfile` y `docker-compose.yml`; el servicio se publica únicamente en `127.0.0.1:4173` del host.
-
-Para inicializar o volver a cargar los datos durante el desarrollo:
-
-```bash
-npm run build
-npm run db:init
-```
-
-El estado de D1 local se conserva en `.wrangler/state` y Docker lo monta en el volumen `plato360-wrangler-state`.
+El modelo relacional y sus decisiones están documentados en `docs/data-model.md`.
 
 ## Rutas
 
-- `/` — redirige a la carta visual.
-- `/carta` — carta visual para clientes.
-- `/carta/tradicional` — carta digital tradicional con fotos y texto, sin videos.
+- `/` — redirección a la carta.
+- `/carta` — carta pública de videos publicada en el local.
 - `/carta/plato/[slug]` — detalle de un plato.
-- `/carta/tu-decides` — platos futuros en prueba y votación.
-- `/carta/tu-decides/[slug]` — detalle de un plato futuro.
-- `/restaurante/login` — acceso privado de la vista restaurante.
-- `/restaurante` — métricas y edición de contenido para el restaurante.
-
-## API del MVP
-
-- `GET /api/menu` — restaurante, categorías y platos publicados.
-- `GET /api/tu-decides` — candidatos activos y sus métricas iniciales.
-- `GET /api/health` — estado del servicio.
-- `POST /api/auth/login` y `POST /api/auth/logout` — sesión de la vista restaurante.
-- `GET/POST/PATCH/DELETE /api/admin/catalog` — lectura, alta, edición y eliminación protegida de negocio, categorías, platos e ideas. Las categorías con platillos asignados no se pueden borrar hasta mover esos platillos.
-- `POST /api/admin/uploads` — carga protegida de imágenes de referencia para producción; en celular acepta cámara o archivos.
-- `GET /api/assets/...` — sirve los assets cargados en el bucket R2 local/VPS.
-- `GET/POST /api/admin/video-jobs` — cola protegida para solicitar videos por platillo. La llamada al generador HTTP POST queda preparada, pero todavía no se ejecuta.
-
-La ruta anterior `/carta/proximamente` se conserva como alias compatible para enlaces existentes.
+- `/carta/pedido` — selección local del pedido.
+- `/carta/proximamente` — platos futuros en prueba.
+- `/carta/proximamente/[slug]` — detalle de un plato futuro.
+- `/panel` — consola operativa protegida por sesión. `/admin` redirige a esta ruta para conservar accesos anteriores.
+- `/api/health` — comprobación de disponibilidad para Docker y el proxy.
+- `/api/public/session` — abre o reutiliza la sesión anónima de una mesa a partir de un token QR.
+- `/api/public/orders` — crea y consulta pedidos asociados a la sesión de la mesa.
+- `/api/public/candidates/:slug/vote` — registra un voto por sesión para un plato en prueba.
+- `/api/public/candidates/:slug/interest` — registra un email interesado, sin duplicados.
+- `/api/public/telemetry` — registra eventos anónimos idempotentes de la sesión QR.
+- `/api/admin/orders` — bandeja protegida para consultar y atender pedidos por local.
+- `/api/admin/users` — gestión de usuarios internos por rol.
+- `/api/admin/qr` — emisión, consulta y revocación de QR.
+- `/api/admin/features` — funciones del local, sólo para SuperAdmin.
 
 ## Personalización rápida
 
-- Restaurante, tagline, ubicación, logo y WhatsApp: `data/restaurant.ts`.
-- Platos, precios, copy, ingredientes y archivos visuales: `data/dishes.ts`.
-- Assets públicos listos para el VPS: `public/assets/`. Las imágenes que el restaurante suba desde el panel se guardan aparte en R2 mediante el binding `BUCKET`.
-- Platos futuros y votos de ejemplo: `data/candidates.ts`.
-- Esquema y seed persistente: `db/schema.ts` y `db/seed.sql`.
+- Los fixtures iniciales de carga están en `data/` y sólo los consume `npm run db:seed`; la aplicación no los usa como fallback.
+- El contenido operativo se administra en PostgreSQL y sus medios se sirven desde `public/assets/`.
 - Sistema visual completo: `app/globals.css`.
+
+El catálogo público sólo muestra productos publicados y disponibles en PostgreSQL. Si la base no está configurada o no tiene contenido, la carta muestra un estado vacío y no inventa datos.
+
+Los códigos QR, las sesiones anónimas, los pedidos públicos, la participación en candidatos, la telemetría y la bandeja operativa están documentados en `docs/qr-service.md`, `docs/public-session.md`, `docs/public-orders.md`, `docs/public-candidates.md`, `docs/telemetry.md` y `docs/admin-orders.md`.
 
 ## Assets
 
@@ -83,20 +91,8 @@ public/assets/
 
 Al desplegar, se debe copiar la carpeta `public/assets/` junto con la aplicación. Las rutas públicas empiezan con `/assets/`, por lo que funcionan igual en local y en el VPS.
 
-La interfaz detecta si un video todavía no existe y muestra un fallback visual; cada archivo puede reemplazarse sin editar componentes.
-
-En la pestaña “Carta de videos” del panel restaurante, el bloque “Imágenes para producción” permite elegir una imagen, abrir la cámara en dispositivos móviles y subir varias imágenes. Las referencias se conservan en la solicitud de video y se sirven desde `/api/assets/...`.
-
-## Alcance actual del MVP
-
-La interfaz pública incluye tres experiencias: carta visual, carta tradicional y “Tu decides”. El restaurante también cuenta con un panel privado separado en dos productos: “Carta tradicional” para cargar y editar platillos, y “Carta de videos” para gestionar assets y solicitar producción. Pedidos y pagos quedan fuera de esta primera versión.
-
-La generación de video se integrará más adelante mediante una petición POST HTTP desde el servidor. Por ahora, solicitar un video crea una tarea `requested` en la cola local; los videos terminados se pueden cargar manualmente desde `public/assets/videos/`.
-
-## Acceso local del restaurante
-
-En Docker, la demo usa por defecto `admin` / `plato360-local`. Se pueden reemplazar antes de iniciar el contenedor mediante `ADMIN_USERNAME`, `ADMIN_PASSWORD` y `ADMIN_SESSION_SECRET`. Estos valores son únicamente de desarrollo local; antes de publicar en un VPS deben definirse como secretos propios.
+La carta reproduce únicamente videos publicados. Si un medio falta, se informa el estado sin sustituirlo por contenido sintético.
 
 ## Estado de la carta
 
-Los votos, avisos, catálogo del restaurante y solicitudes de video se guardan en la base local D1 de la demo. No se envían pedidos ni se conecta todavía ningún servicio externo de generación.
+Los pedidos, votos, avisos y eventos de telemetría se persisten en PostgreSQL cuando la persona entra desde una sesión QR válida. La sesión del carrito sólo conserva la selección actual del navegador hasta enviar el pedido.

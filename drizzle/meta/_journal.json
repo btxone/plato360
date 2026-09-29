@@ -4,9 +4,30 @@
   "entries": [
     {
       "idx": 0,
-      "version": "6",
-      "when": 1789862443993,
-      "tag": "0000_low_wallflower",
+      "version": "7",
+      "when": 1790024089605,
+      "tag": "0000_fluffy_tag",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790025080637,
+      "tag": "0001_light_barracuda",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790079780400,
+      "tag": "0002_neat_madame_web",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790177031762,
+      "tag": "0003_order_processing_flow",
       "breakpoints": true
     }
   ]

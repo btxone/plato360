@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+export const runtime = "nodejs";
 
 export function GET() {
-  return NextResponse.json({
-    service: "plato360",
+  return Response.json({
     status: "ok",
+    service: "plato360",
   });
 }

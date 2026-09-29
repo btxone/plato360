@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
-import { clearAdminSessionCookie } from "@/lib/admin-auth";
+import { revokeCurrentSession, sessionCookieName, sessionCookieOptions } from "@/lib/auth";
+
+export const runtime = "nodejs";
 
 export async function POST() {
-  const response = NextResponse.json({ ok: true });
-  response.headers.set("Set-Cookie", clearAdminSessionCookie());
-  return response;
+  try {
+    await revokeCurrentSession();
+    const response = NextResponse.json({ ok: true });
+    response.cookies.set(sessionCookieName, "", { ...sessionCookieOptions(), maxAge: 0 });
+    return response;
+  } catch (error) {
+    console.error("auth.logout", error);
+    return NextResponse.json({ error: "No se pudo cerrar sesión." }, { status: 500 });
+  }
 }
-

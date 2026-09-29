@@ -1,0 +1,220 @@
+.admin-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .28);
+  color: var(--panel-muted);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.admin-theme-toggle:hover {
+  border-color: var(--panel-accent);
+  background: var(--panel-peach);
+  color: var(--panel-accent-dark);
+}
+
+.admin-shell--dark {
+  --panel-bg: #17120f;
+  --panel-surface: #211a16;
+  --panel-surface-strong: #241c18;
+  --panel-ink: #f7f1e8;
+  --panel-muted: #b8aaa0;
+  --panel-muted-soft: #a9988d;
+  --panel-border: #44332a;
+  --panel-border-soft: #3b2d25;
+  --panel-accent: #ef754f;
+  --panel-accent-dark: #ef754f;
+  --panel-sidebar: #100d0b;
+  --panel-sidebar-soft: #211a16;
+  --panel-green: #263425;
+  --panel-green-ink: #b9d0aa;
+  --panel-peach: #3b2822;
+  --panel-warning: #3b2b1b;
+  --panel-warning-ink: #f0c486;
+  --panel-danger: #efaaa0;
+  --panel-shadow: 0 18px 45px rgba(0, 0, 0, .2);
+  --panel-shadow-lg: 0 26px 65px rgba(0, 0, 0, .42);
+  background:
+    radial-gradient(circle at 94% 3%, rgba(95, 66, 49, .24), transparent 24%),
+    radial-gradient(circle at 4% 96%, rgba(239, 117, 79, .08), transparent 24%),
+    var(--panel-bg);
+}
+
+.admin-shell--dark .admin-sidebar {
+  border-right-color: rgba(255, 255, 255, .07);
+  background:
+    radial-gradient(circle at 0 0, rgba(239, 117, 79, .16), transparent 33%),
+    linear-gradient(160deg, #211a16 0%, #100d0b 62%, #0b0908 100%);
+}
+
+.admin-shell--dark .admin-topbar {
+  border-bottom-color: rgba(68, 51, 42, .9);
+  background: rgba(33, 26, 22, .84);
+}
+
+.admin-shell--dark .admin-panel {
+  background: rgba(33, 26, 22, .9);
+}
+
+.admin-shell--dark .admin-role {
+  border-color: rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .055);
+}
+
+.admin-shell--dark .admin-sidebar nav button:hover {
+  border-color: rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .07);
+}
+
+.admin-shell--dark .admin-sidebar nav button.is-active {
+  border-color: rgba(255, 255, 255, .15);
+  background: linear-gradient(100deg, #5e392d, #432b23);
+  color: #f7f1e8;
+}
+
+.admin-shell--dark .admin-sidebar nav button.is-active svg {
+  color: #f5a083;
+}
+
+.admin-shell--dark .admin-topbar__account span {
+  background: #f7f1e8;
+  color: #211a16;
+}
+
+.admin-shell--dark .admin-observer__trigger,
+.admin-shell--dark .admin-theme-toggle {
+  border-color: var(--panel-border);
+  background: rgba(33, 26, 22, .72);
+  color: var(--panel-muted);
+}
+
+.admin-shell--dark .admin-observer__menu,
+.admin-shell--dark .admin-modal,
+.admin-shell--dark .admin-panel,
+.admin-shell--dark .admin-catalog-form,
+.admin-shell--dark .admin-user-editor,
+.admin-shell--dark .admin-order,
+.admin-shell--dark .admin-feature,
+.admin-shell--dark .admin-log,
+.admin-shell--dark .admin-telemetry-card,
+.admin-shell--dark .admin-telemetry-block,
+.admin-shell--dark .admin-telemetry-monthly-card {
+  border-color: var(--panel-border);
+  background: var(--panel-surface);
+}
+
+.admin-shell--dark .admin-observer__menu button:hover,
+.admin-shell--dark .admin-observer__menu button.is-selected,
+.admin-shell--dark .admin-tabs button.is-active,
+.admin-shell--dark .admin-secondary:hover,
+.admin-shell--dark .admin-icon-button:hover {
+  background: var(--panel-peach);
+}
+
+.admin-shell--dark .admin-tabs {
+  border-color: var(--panel-border-soft);
+  background: rgba(59, 45, 37, .55);
+}
+
+.admin-shell--dark .admin-tabs button.is-active {
+  color: #f0b09a;
+}
+
+.admin-shell--dark .admin-panel input,
+.admin-shell--dark .admin-panel select,
+.admin-shell--dark .admin-panel textarea,
+.admin-shell--dark .admin-modal input,
+.admin-shell--dark .admin-modal select,
+.admin-shell--dark .admin-modal textarea,
+.admin-shell--dark .admin-catalog-form input,
+.admin-shell--dark .admin-catalog-form select,
+.admin-shell--dark .admin-catalog-form textarea,
+.admin-shell--dark .admin-user-editor input,
+.admin-shell--dark .admin-user-editor select,
+.admin-shell--dark .admin-order__editor textarea {
+  border-color: #574238;
+  background: #17120f;
+  color: #f7f1e8;
+}
+
+.admin-shell--dark .admin-panel input::placeholder,
+.admin-shell--dark .admin-panel textarea::placeholder,
+.admin-shell--dark .admin-catalog-form input::placeholder,
+.admin-shell--dark .admin-catalog-form textarea::placeholder,
+.admin-shell--dark .admin-order__editor textarea::placeholder {
+  color: #76685d;
+}
+
+.admin-shell--dark .admin-secondary {
+  border-color: #574238;
+  background: rgba(33, 26, 22, .6);
+  color: #d8c9bd;
+}
+
+.admin-shell--dark .admin-catalog-row,
+.admin-shell--dark .admin-log-detail__field {
+  border-color: var(--panel-border-soft);
+  background: var(--panel-surface-strong);
+}
+
+.admin-shell--dark .admin-order__editor,
+.admin-shell--dark .admin-order__notes,
+.admin-shell--dark .admin-order-details__notes,
+.admin-shell--dark .admin-log-detail__description {
+  background: var(--panel-peach);
+}
+
+.admin-shell--dark .admin-logo-upload {
+  border-color: #674a3d;
+  background: var(--panel-surface-strong);
+}
+
+.admin-shell--dark .admin-logo-upload:hover,
+.admin-shell--dark .admin-logo-upload.is-dragging {
+  border-color: var(--panel-accent);
+  background: var(--panel-peach);
+}
+
+.admin-shell--dark .admin-log--error {
+  border-color: #754641;
+  background: #2e1d1b;
+}
+
+.admin-shell--dark .admin-badge--revoked,
+.admin-shell--dark .admin-badge--suspended {
+  background: #432a27;
+  color: #efaaa0;
+}
+
+.admin-shell--dark .admin-badge--retired {
+  background: #3c324d;
+  color: #d7c9f5;
+}
+
+.admin-shell--dark .admin-telemetry-card.is-highlight {
+  border-color: #40543a;
+  background: var(--panel-green);
+}
+
+.admin-shell--dark .admin-telemetry-monthly-card__media {
+  background: var(--panel-peach);
+}
+
+@media (max-width: 760px) {
+  .admin-theme-toggle {
+    width: 36px;
+    padding: 0;
+  }
+
+  .admin-theme-toggle span {
+    display: none;
+  }
+}
