@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
-import { Activity, Check, Clock, Clapperboard, Download, Eye, Library, MoreHorizontal, Play, Plus, RefreshCw, Search, Sparkles, Upload, Video } from "lucide-react";
+import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { Activity, Check, Clock, Clapperboard, Download, Eye, Image as ImageIcon, Library, MoreHorizontal, Play, Plus, RefreshCw, Search, Sparkles, Upload, Video, X } from "lucide-react";
 
 type VideoSection = "queue" | "generate" | "library";
 type VideoJobStatus = "queued" | "processing" | "ready" | "review";
@@ -9,6 +9,7 @@ type VideoJobStatus = "queued" | "processing" | "ready" | "review";
 type VideoJob = {
   id: string;
   title: string;
+  description?: string;
   source: string;
   status: VideoJobStatus;
   progress: number;
@@ -56,9 +57,6 @@ const statusIcon: Record<VideoJobStatus, typeof Clock> = {
   review: Eye,
 };
 
-const generationStyles = ["Editorial cálido", "Food close-up", "Minimalista", "Dinámico social"];
-const dishOptions = ["Smash Trufa", "Pizza Burrata", "Cheesecake Pistacho", "Ravioles de Calabaza", "Milanesa Brasa", "Tacos Crispy"];
-
 function VideoSectionTabs({ section, onChange }: { section: VideoSection; onChange: (section: VideoSection) => void }) {
   const tabs: Array<{ id: VideoSection; label: string; helper: string; icon: typeof Clapperboard }> = [
     { id: "queue", label: "Cola", helper: "3 trabajos", icon: Activity },
@@ -85,15 +83,39 @@ function QueueView({ queue, onRefresh, onGenerate }: { queue: VideoJob[]; onRefr
 }
 
 function GenerateView({ onCreated }: { onCreated: (job: VideoJob) => void }) {
-  const [dish, setDish] = useState(dishOptions[0]);
-  const [style, setStyle] = useState(generationStyles[0]);
-  const [duration, setDuration] = useState("8");
-  const [prompt, setPrompt] = useState("Plano cercano, movimiento suave y luz cálida. El plato debe verse recién servido y apetitoso.");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [images, setImages] = useState<Array<{ id: string; file: File }>>([]);
+  const [imageError, setImageError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canSubmit = title.trim().length > 0 && description.trim().length > 0 && images.length >= 2 && images.length <= 4;
+  const handleImages = (event: ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (selected.some((file) => !file.type.startsWith("image/"))) {
+      setImageError("Solo podés subir imágenes JPG, PNG o WebP.");
+      return;
+    }
+    if (images.length + selected.length > 4) {
+      setImageError("Podés subir un máximo de 4 imágenes.");
+      return;
+    }
+    setImageError("");
+    setImages((current) => [...current, ...selected.map((file) => ({ id: `${file.name}-${file.lastModified}-${Math.random()}`, file }))]);
+  };
+  const removeImage = (id: string) => {
+    setImages((current) => current.filter((image) => image.id !== id));
+    setImageError("");
+  };
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onCreated({ id: `job-${Date.now()}`, title: dish, source: `${style} · Nueva generación`, status: "queued", progress: 0, meta: `Vertical 9:16 · ${duration} s`, time: "En cola · posición 4", background: "linear-gradient(135deg, #3d2b25, #b86c4e)" });
+    if (!canSubmit) {
+      setImageError(images.length < 2 ? "Subí entre 2 y 4 imágenes para continuar." : "Completá el título y la descripción para continuar.");
+      return;
+    }
+    onCreated({ id: `job-${Date.now()}`, title: title.trim(), description: description.trim(), source: "Nueva generación", status: "queued", progress: 0, meta: `${images.length} imágenes de referencia`, time: "En cola · posición 4", background: "linear-gradient(135deg, #3d2b25, #b86c4e)" });
   };
-  return <div className="admin-video-view"><div className="admin-video-generator-layout"><form className="admin-video-form" onSubmit={submit}><div className="admin-video-section-heading"><div><span className="admin-eyebrow">Nuevo contenido</span><h2>Generá un video</h2><p>Definí el plato y el estilo. La generación se agregará a la cola para revisión.</p></div></div><label>Plato base<select value={dish} onChange={(event) => setDish(event.target.value)}>{dishOptions.map((option) => <option key={option}>{option}</option>)}</select></label><div><span className="admin-field-title">Estilo visual</span><div className="admin-video-style-grid">{generationStyles.map((option) => <button className={style === option ? "is-selected" : ""} key={option} type="button" onClick={() => setStyle(option)}>{option}<small>{option === "Food close-up" ? "Detalle y textura" : option === "Dinámico social" ? "Más ritmo" : option === "Minimalista" ? "Limpio y editorial" : "Cálido y artesanal"}</small></button>)}</div></div><div className="admin-video-form-row"><label>Duración<select value={duration} onChange={(event) => setDuration(event.target.value)}><option value="6">6 segundos</option><option value="8">8 segundos</option><option value="10">10 segundos</option></select></label><label>Formato<select defaultValue="9:16"><option>9:16 · Vertical</option><option>1:1 · Cuadrado</option><option>16:9 · Horizontal</option></select></label></div><label>Indicaciones para la escena<textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={4} maxLength={500} /><small className="admin-video-counter">{prompt.length}/500</small></label><div className="admin-video-upload"><Upload size={18} /><div><strong>Imagen de referencia</strong><small>Opcional · JPG, PNG o WebP · hasta 10 MB</small></div><button className="admin-secondary" type="button">Elegir imagen</button></div><div className="admin-video-form-actions"><span><Sparkles size={15} />Se consumirá 1 crédito de generación</span><button className="admin-primary" type="submit"><Sparkles size={16} />Agregar a la cola</button></div></form><aside className="admin-video-preview"><div className="admin-video-preview__visual"><div className="admin-video-preview__glow" /><span className="admin-video-preview__label">Vista previa</span><div className="admin-video-preview__plate">{dish === "Smash Trufa" ? "🍔" : dish === "Pizza Burrata" ? "🍕" : dish === "Cheesecake Pistacho" ? "🍰" : dish === "Ravioles de Calabaza" ? "🥟" : dish === "Milanesa Brasa" ? "🥩" : "🌮"}</div><button type="button" aria-label="Reproducir vista previa"><Play size={17} fill="currentColor" /></button></div><div className="admin-video-preview__copy"><span className="admin-eyebrow">Brief seleccionado</span><h3>{dish}</h3><p>{style} · {duration} s · Vertical</p><div className="admin-video-steps"><span><i>1</i>Analizar imagen</span><span><i>2</i>Generar movimiento</span><span><i>3</i>Preparar revisión</span></div></div></aside></div></div>;
+  return <div className="admin-video-view"><div className="admin-video-generator-layout"><form className="admin-video-form" onSubmit={submit}><div className="admin-video-section-heading"><div><span className="admin-eyebrow">Nuevo contenido</span><h2>Generá un video</h2><p>Completá el título, la descripción y cargá entre 2 y 4 imágenes de referencia.</p></div></div><label>Título<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ej. Hamburguesa especial de la casa" required /></label><label>Descripción<textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Describí el producto, sus ingredientes y qué debería destacar el video…" rows={5} maxLength={500} required /><small className="admin-video-counter">{description.length}/500</small></label><div className={`admin-video-upload admin-video-upload--images ${imageError ? "is-error" : ""}`}><Upload size={18} /><div><strong>Imágenes de referencia</strong><small>Requeridas: entre 2 y 4 · JPG, PNG o WebP · hasta 10 MB cada una</small>{images.length > 0 && <div className="admin-video-image-list">{images.map((image, index) => <span className="admin-video-image" key={image.id}><ImageIcon size={14} /><span>{index + 1}. {image.file.name}</span><button type="button" onClick={() => removeImage(image.id)} aria-label={`Quitar ${image.file.name}`}><X size={13} /></button></span>)}</div>}{imageError && <small className="admin-video-upload-error">{imageError}</small>}</div><input ref={fileInputRef} className="admin-sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleImages} /><button className="admin-secondary" type="button" onClick={() => fileInputRef.current?.click()}>Elegir imágenes</button></div><div className="admin-video-form-actions"><span><ImageIcon size={15} />{images.length}/4 imágenes · mínimo 2</span><button className="admin-primary" type="submit" disabled={!canSubmit}><Sparkles size={16} />Agregar a la cola</button></div></form><aside className="admin-video-preview"><div className="admin-video-preview__visual"><div className="admin-video-preview__glow" /><span className="admin-video-preview__label">Vista previa</span><div className="admin-video-preview__plate"><ImageIcon size={54} /></div><button type="button" aria-label="Reproducir vista previa"><Play size={17} fill="currentColor" /></button></div><div className="admin-video-preview__copy"><span className="admin-eyebrow">Brief seleccionado</span><h3>{title || "Tu nuevo video"}</h3><p>{images.length} de 2-4 imágenes cargadas</p><div className="admin-video-steps"><span><i>1</i>Analizar imágenes</span><span><i>2</i>Generar movimiento</span><span><i>3</i>Preparar revisión</span></div></div></aside></div></div>;
 }
 
 function LibraryView() {

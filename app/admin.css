@@ -2573,6 +2573,64 @@
   gap: 3px;
 }
 
+.admin-video-upload--images {
+  align-items: flex-start;
+}
+
+.admin-video-upload--images > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.admin-video-image-list {
+  display: grid;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.admin-video-image {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+  color: var(--panel-muted);
+  font-size: 10px;
+}
+
+.admin-video-image > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-video-image button {
+  display: grid;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--panel-muted-soft);
+  cursor: pointer;
+}
+
+.admin-video-image button:hover {
+  background: var(--panel-peach);
+  color: var(--panel-accent-dark);
+}
+
+.admin-video-upload-error {
+  color: var(--panel-accent-dark) !important;
+}
+
+.admin-video-upload.is-error {
+  border-color: var(--panel-accent);
+}
+
 .admin-video-upload strong {
   color: var(--panel-ink);
   font-size: 11px;
