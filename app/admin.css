@@ -430,17 +430,29 @@
   overscroll-behavior: contain;
   gap: 18px;
   padding-right: 4px;
-  scrollbar-color: rgba(239, 117, 79, .55) transparent;
+  scrollbar-color: rgba(255, 255, 255, .18) transparent;
   scrollbar-width: thin;
 }
 
 .admin-sidebar nav::-webkit-scrollbar {
-  width: 7px;
+  width: 4px;
+}
+
+.admin-sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .admin-sidebar nav::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(239, 117, 79, .55);
+  background: rgba(255, 255, 255, .18);
+}
+
+.admin-sidebar nav:hover {
+  scrollbar-color: rgba(255, 255, 255, .28) transparent;
+}
+
+.admin-sidebar nav:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .28);
 }
 
 .admin-nav-group {
