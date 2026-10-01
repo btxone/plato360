@@ -1,6 +1,7 @@
 .admin-shell,
 .admin-login,
 .admin-loading {
+  --panel-sidebar-width: clamp(232px, 18vw, 264px);
   --panel-bg: #f8f2ea;
   --panel-surface: #fffaf4;
   --panel-surface-strong: #fffdf9;
@@ -333,7 +334,7 @@
   z-index: 30;
   inset: 0 auto 0 0;
   display: flex;
-  width: 264px;
+  width: var(--panel-sidebar-width);
   flex-direction: column;
   padding: 28px 18px 20px;
   border-right: 1px solid rgba(255, 255, 255, .08);
@@ -505,7 +506,7 @@
 
 .admin-main {
   min-height: 100dvh;
-  margin-left: 264px;
+  margin-left: var(--panel-sidebar-width);
 }
 
 .admin-topbar {
@@ -516,7 +517,8 @@
   align-items: center;
   justify-content: space-between;
   min-height: 78px;
-  padding: 0 48px;
+  gap: 16px;
+  padding: 0 clamp(24px, 3vw, 48px);
   border-bottom: 1px solid rgba(228, 216, 204, .9);
   background: rgba(255, 250, 244, .82);
   color: var(--panel-muted);
@@ -527,6 +529,7 @@
 .admin-topbar__context {
   display: flex;
   align-items: center;
+  flex: 0 1 auto;
   gap: 9px;
   min-width: 0;
   color: var(--panel-ink);
@@ -547,6 +550,7 @@
 .admin-topbar__actions {
   display: flex;
   align-items: center;
+  flex: 0 1 auto;
   justify-content: end;
   gap: 10px;
   min-width: 0;
@@ -597,7 +601,7 @@
 }
 
 .admin-content {
-  width: min(1240px, calc(100% - 96px));
+  width: min(1240px, calc(100% - clamp(48px, 6vw, 96px)));
   margin: 0 auto;
   padding: 46px 0 78px;
 }
@@ -2166,13 +2170,51 @@
   white-space: nowrap;
 }
 
+@media (max-width: 1180px) {
+  .admin-sidebar {
+    padding: 24px 14px 18px;
+  }
+
+  .admin-sidebar__brand {
+    padding-inline: 6px;
+    padding-bottom: 22px;
+  }
+
+  .admin-role {
+    margin-inline: 2px;
+    margin-bottom: 20px;
+  }
+
+  .admin-sidebar nav {
+    gap: 12px;
+  }
+
+  .admin-sidebar nav button,
+  .admin-logout {
+    gap: 9px;
+    padding-inline: 10px;
+  }
+
+  .admin-topbar__account {
+    max-width: 160px;
+  }
+
+  .admin-observer__trigger {
+    min-width: 190px;
+  }
+
+  .admin-panel {
+    padding: 28px;
+  }
+}
+
 @media (max-width: 1100px) {
   .admin-content {
-    width: min(100% - 54px, 1020px);
+    width: min(100% - 44px, 1020px);
   }
 
   .admin-topbar {
-    padding-inline: 28px;
+    padding-inline: 24px;
   }
 
   .admin-telemetry-stats {
@@ -2207,7 +2249,7 @@
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .admin-sidebar {
     transform: translateX(-100%);
     transition: transform .25s ease;
