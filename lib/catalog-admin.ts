@@ -123,6 +123,7 @@ async function getCatalogAtLocation(locationId: string) {
         priceCents: product.priceCents,
         status: product.status,
         isAvailable: product.isAvailable,
+        inVisualMenu: product.status === "published" && product.isAvailable && visualEntry?.status === "published",
         sortOrder: visualEntry?.sortOrder ?? 0,
         publishedAt: product.publishedAt ?? visualEntry?.publishedAt ?? null,
         retiredAt: product.retiredAt ?? visualEntry?.retiredAt ?? null,

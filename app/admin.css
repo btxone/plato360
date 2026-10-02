@@ -2836,6 +2836,15 @@
   min-height: 175px;
 }
 
+.admin-video-library-card__thumb > video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .admin-video-library-card__thumb > span {
   position: absolute;
   z-index: 2;
